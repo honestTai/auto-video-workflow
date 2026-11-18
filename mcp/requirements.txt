@@ -1,0 +1,28 @@
+# 抖音接口统一走 utils/http_client.py（curl_cffi 冒充 Chrome 的 TLS/HTTP2 指纹）。
+curl_cffi
+# requests 只用于下载 CDN 媒体与解析分享短链，这两条链路不涉及风控。
+requests
+retry
+urllib3
+lxml
+loguru
+python-dotenv
+qrcode
+
+# 签名与发布凭证
+cryptography
+ecdsa
+backports.zstd ; python_version<'3.14'
+
+# 发布视频时的封面帧预处理
+av
+opencv-python-headless
+pillow
+
+# 从本机 Chrome 采集登录凭证（CDP WebSocket）
+websocket-client
+
+# MCP stdio 服务
+mcp>=1.0,<2
+
+# 开发依赖（跑 tests/ 用）：pip install pytest

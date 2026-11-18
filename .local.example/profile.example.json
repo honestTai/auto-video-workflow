@@ -1,0 +1,12 @@
+{
+  "account": "我的抖音账号",
+  "keywords": ["AI 工具", "效率", "编程"],
+  "visibility": 0,
+  "allow_download": true,
+  "review_analytics": true,
+  "analytics_limit": 10,
+  "voices": {
+    "host": "zh_female_vv_uranus_bigtts"
+  },
+  "motion_lib": ""
+}

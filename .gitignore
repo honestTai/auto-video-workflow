@@ -1,0 +1,28 @@
+# 本机私有配置：账号、关键词池、个人创作要求
+.local/
+
+# 抖音 MCP：账号数据库（含登录凭证）、下载的视频、环境变量、虚拟环境
+mcp/.data/
+mcp/.env
+mcp/.env.bak*
+mcp/.venv/
+*.db
+*.db-shm
+*.db-wal
+
+# 出片工程与成片
+videos/
+*.mp4
+*.mov
+*.wav
+
+# 通用
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+.hyperframes/
+.DS_Store
+.idea/
+.vscode/
+*.log

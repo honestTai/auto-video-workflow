@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 176" width="1200" height="176" role="img" aria-label="auto-video-workflow closed-loop data-driven video pipeline">
+  <defs>
+    <linearGradient id="pBg" x1="0" y1="0" x2="1200" y2="176" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b0b14"/>
+      <stop offset="1" stop-color="#111022"/>
+    </linearGradient>
+    <style>
+      .f-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+      .f-mono { font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="176" rx="18" fill="url(#pBg)" stroke="#282542" stroke-width="1.2"/>
+
+  <!-- Stage 1 -->
+  <rect x="26" y="24" width="262" height="128" rx="14" fill="#131322" stroke="#53389e" stroke-width="1.2"/>
+  <text x="46" y="50" class="f-mono" font-size="11" font-weight="700" fill="#b692f6">01 · ANALYTICS &amp; RESEARCH</text>
+  <text x="46" y="78" class="f-sans" font-size="16.5" font-weight="800" fill="#f5f5fa">复盘 5s 跳出 + 全网搜证</text>
+  <text x="46" y="104" class="f-mono" font-size="11.2" fill="#8e8ba8">get_account_analytics()</text>
+  <text x="46" y="124" class="f-mono" font-size="11.2" fill="#8e8ba8">search_videos + web sources</text>
+
+  <!-- Connector 1 -->
+  <line x1="288" y1="88" x2="332" y2="88" stroke="#47387a" stroke-width="2" stroke-dasharray="4 4"/>
+  <polygon points="326,83 334,88 326,93" fill="#9b72ff"/>
+  <circle r="3.5" fill="#d5befe">
+    <animateMotion dur="1.4s" repeatCount="indefinite" path="M 288 88 L 332 88"/>
+  </circle>
+
+  <!-- Stage 2 -->
+  <rect x="334" y="24" width="254" height="128" rx="14" fill="#131322" stroke="#2d74a8" stroke-width="1.2"/>
+  <text x="354" y="50" class="f-mono" font-size="11" font-weight="700" fill="#6fd3ff">02 · VOICE-FIRST TIMELINE</text>
+  <text x="354" y="78" class="f-sans" font-size="16.5" font-weight="800" fill="#f5f5fa">文案分镜 + 豆包逐字配音</text>
+  <text x="354" y="104" class="f-mono" font-size="11.2" fill="#8e8ba8">script.md + project.json</text>
+  <text x="354" y="124" class="f-mono" font-size="11.2" fill="#8e8ba8">tts.mjs → voice.wav + timing.js</text>
+
+  <!-- Connector 2 -->
+  <line x1="588" y1="88" x2="632" y2="88" stroke="#28587a" stroke-width="2" stroke-dasharray="4 4"/>
+  <polygon points="626,83 634,88 626,93" fill="#6fd3ff"/>
+  <circle r="3.5" fill="#6fd3ff">
+    <animateMotion dur="1.4s" begin="-0.45s" repeatCount="indefinite" path="M 588 88 L 632 88"/>
+  </circle>
+
+  <!-- Stage 3 -->
+  <rect x="634" y="24" width="254" height="128" rx="14" fill="#131322" stroke="#2d8f74" stroke-width="1.2"/>
+  <text x="654" y="50" class="f-mono" font-size="11" font-weight="700" fill="#68e6b2">03 · MOTION-LIB + RENDER</text>
+  <text x="654" y="78" class="f-sans" font-size="16.5" font-weight="800" fill="#f5f5fa">动效自检 + 1080p 60fps</text>
+  <text x="654" y="104" class="f-mono" font-size="11.2" fill="#8e8ba8">snap.mjs → sheet.jpg QA</text>
+  <text x="654" y="124" class="f-mono" font-size="11.2" fill="#8e8ba8">bgm.mjs + render.mjs → MP4</text>
+
+  <!-- Connector 3 -->
+  <line x1="888" y1="88" x2="932" y2="88" stroke="#2d7a58" stroke-width="2" stroke-dasharray="4 4"/>
+  <polygon points="926,83 934,88 926,93" fill="#a8ff57"/>
+  <circle r="3.5" fill="#a8ff57">
+    <animateMotion dur="1.4s" begin="-0.9s" repeatCount="indefinite" path="M 888 88 L 932 88"/>
+  </circle>
+
+  <!-- Stage 4 -->
+  <rect x="934" y="24" width="240" height="128" rx="14" fill="#131b16" stroke="#65a844" stroke-width="1.2"/>
+  <text x="954" y="50" class="f-mono" font-size="11" font-weight="700" fill="#a8ff57">04 · COVER &amp; PUBLISH</text>
+  <text x="954" y="78" class="f-sans" font-size="16.5" font-weight="800" fill="#f5f5fa">3:4 封面 + 抖音自动发布</text>
+  <text x="954" y="104" class="f-mono" font-size="11.2" fill="#9cb8a6">1080×1440 cover-3x4.png</text>
+  <text x="954" y="124" class="f-mono" font-size="11.2" fill="#9cb8a6">publish_video → 数据回流 ↺</text>
+</svg>
