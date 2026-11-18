@@ -145,3 +145,49 @@ export function estimateBpm(file, duration) {
   }
   return bestLag ? Math.round((fps * 60) / bestLag) : null;
 }
+
+/**
+ * 从配音音频（voice.wav）提取真实逐帧口型包络（0=闭嘴, 1=半张, 2=大张）：
+ * - 逗号/句间停顿与换气静音处严格归 0（闭嘴），彻底消除伪随机“空嚼”抖动；
+ * - 连续长元音自动插入自然的音节微收（2→1→2），避免大张嘴僵住。
+ */
+export function extractMouthEnvelope(file, fps = 20) {
+  const sr = 16000, hop = Math.round(sr / fps);
+  const pcm = execFileSync("ffmpeg", ["-v", "error", "-i", file, "-ac", "1", "-ar", String(sr), "-f", "s16le", "-"], { maxBuffer: 64 * 1024 * 1024 });
+  const n = Math.floor(pcm.length / 2 / hop);
+  if (!n) return { fps, frames: "" };
+  const rms = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    let sum = 0;
+    for (let k = 0; k < hop; k++) {
+      const v = pcm.readInt16LE((i * hop + k) * 2) / 32768;
+      sum += v * v;
+    }
+    rms[i] = Math.sqrt(sum / hop);
+  }
+  const active = Array.from(rms).filter((v) => v > 0.008).sort((a, b) => a - b);
+  const ref = active.length ? active[Math.floor(active.length * 0.9)] : 0.1;
+  const thOpen = ref * 0.16, thWide = ref * 0.52;
+  const states = new Uint8Array(n);
+  let wideRun = 0;
+  for (let i = 0; i < n; i++) {
+    const v = rms[i];
+    if (v < thOpen) {
+      states[i] = 0;
+      wideRun = 0;
+    } else if (v >= thWide) {
+      wideRun++;
+      // 连续超过 3 帧（150ms）处于高能量时，若局部能量微降或满 3 帧则回收一拍半张嘴，贴合中文音节开合
+      if (wideRun >= 3 && (i + 1 < n && rms[i] < rms[i - 1] * 0.92 || wideRun >= 4)) {
+        states[i] = 1;
+        wideRun = 0;
+      } else {
+        states[i] = 2;
+      }
+    } else {
+      states[i] = 1;
+      wideRun = 0;
+    }
+  }
+  return { fps, frames: Array.from(states).join("") };
+}

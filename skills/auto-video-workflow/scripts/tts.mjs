@@ -16,7 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { parseArgs, die, readProject, writeProject, timeLines, timeLinesFromWords, ttsText } from "./lib.mjs";
+import { parseArgs, die, readProject, writeProject, timeLines, timeLinesFromWords, ttsText, extractMouthEnvelope } from "./lib.mjs";
 import * as volc from "./volc-tts.mjs";
 
 const { opts, rest } = parseArgs(process.argv.slice(2), ["provider", "voice", "pace", "gap", "lead"]);
@@ -126,10 +126,12 @@ if (project.audio.mix) { delete project.audio.mix; fs.rmSync(path.join(dir, "aud
 project.meta = { ...project.meta, pace, tts: { provider, voice: defaultVoice } };
 writeProject(dir, project);
 
+const mouth = extractMouthEnvelope(voicePath, 20);
 const timing = {
   duration: t,
   scenes: scenes.map((s) => ({ id: s.id, start: s.start, end: s.end, d: s.duration, ...(s.speaker ? { speaker: s.speaker } : {}), ...(s.talk ? { talk: s.talk } : {}) })),
   subtitles: scenes.flatMap((s) => s.lines.map((l) => [l.start, l.end, l.text])),
+  mouth,
 };
 fs.writeFileSync(path.join(dir, "timing.js"), `// 由 tts.mjs 生成，不要手改；改了口播文本就重跑 tts.mjs\nwindow.AVW_TIMING = ${JSON.stringify(timing, null, 2)};\n`);
 
