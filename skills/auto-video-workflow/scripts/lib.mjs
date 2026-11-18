@@ -147,11 +147,11 @@ export function estimateBpm(file, duration) {
 }
 
 /**
- * 从配音音频（voice.wav）提取真实逐帧口型包络（0=闭嘴, 1=半张, 2=大张）：
- * - 逗号/句间停顿与换气静音处严格归 0（闭嘴），彻底消除伪随机“空嚼”抖动；
- * - 连续长元音自动插入自然的音节微收（2→1→2），避免大张嘴僵住。
+ * 从配音音频（voice.wav）提取真实逐帧口型包络（0=闭嘴, 1=中口半张, 2=大口张开）：
+ * - 默认采用日式 2D 动画标准口型节拍（12fps ≈ 一拍五，每格约 83ms），避免 20fps 单帧高频抽动；
+ * - 句中瞬时辅音气隙自动平滑为半张嘴（1），仅在真实逗号/换气停顿（连续静音 ≥ 2 格）时彻底闭嘴（0）。
  */
-export function extractMouthEnvelope(file, fps = 20) {
+export function extractMouthEnvelope(file, fps = 12) {
   const sr = 16000, hop = Math.round(sr / fps);
   const pcm = execFileSync("ffmpeg", ["-v", "error", "-i", file, "-ac", "1", "-ar", String(sr), "-f", "s16le", "-"], { maxBuffer: 64 * 1024 * 1024 });
   const n = Math.floor(pcm.length / 2 / hop);
@@ -167,25 +167,23 @@ export function extractMouthEnvelope(file, fps = 20) {
   }
   const active = Array.from(rms).filter((v) => v > 0.008).sort((a, b) => a - b);
   const ref = active.length ? active[Math.floor(active.length * 0.9)] : 0.1;
-  const thOpen = ref * 0.16, thWide = ref * 0.52;
-  const states = new Uint8Array(n);
+  const thOpen = ref * 0.15, thWide = ref * 0.48;
+  const raw = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    raw[i] = rms[i] < thOpen ? 0 : rms[i] >= thWide ? 2 : 1;
+  }
+  // 1) 消除句内单格闭嘴抽动：若前后都在发声（>0），中间仅 1 格跌到 0（爆破音闭气），平滑为半张嘴 1
+  const states = Uint8Array.from(raw);
+  for (let i = 1; i < n - 1; i++) {
+    if (states[i] === 0 && raw[i - 1] > 0 && raw[i + 1] > 0) states[i] = 1;
+  }
+  // 2) 连续大张嘴超过 2 格时插入一格半张嘴（2→1→2），还原自然音节嚼字感
   let wideRun = 0;
   for (let i = 0; i < n; i++) {
-    const v = rms[i];
-    if (v < thOpen) {
-      states[i] = 0;
-      wideRun = 0;
-    } else if (v >= thWide) {
+    if (states[i] === 2) {
       wideRun++;
-      // 连续超过 3 帧（150ms）处于高能量时，若局部能量微降或满 3 帧则回收一拍半张嘴，贴合中文音节开合
-      if (wideRun >= 3 && (i + 1 < n && rms[i] < rms[i - 1] * 0.92 || wideRun >= 4)) {
-        states[i] = 1;
-        wideRun = 0;
-      } else {
-        states[i] = 2;
-      }
+      if (wideRun >= 3) { states[i] = 1; wideRun = 0; }
     } else {
-      states[i] = 1;
       wideRun = 0;
     }
   }

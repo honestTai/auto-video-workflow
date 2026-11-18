@@ -126,7 +126,7 @@ if (project.audio.mix) { delete project.audio.mix; fs.rmSync(path.join(dir, "aud
 project.meta = { ...project.meta, pace, tts: { provider, voice: defaultVoice } };
 writeProject(dir, project);
 
-const mouth = extractMouthEnvelope(voicePath, 20);
+const mouth = extractMouthEnvelope(voicePath, 12);
 const timing = {
   duration: t,
   scenes: scenes.map((s) => ({ id: s.id, start: s.start, end: s.end, d: s.duration, ...(s.speaker ? { speaker: s.speaker } : {}), ...(s.talk ? { talk: s.talk } : {}) })),
