@@ -97,6 +97,16 @@ writeNew("index.html", `<!doctype html>
 `);
 
 for (const sub of ["audio", "assets", "renders", "cover"]) fs.mkdirSync(path.join(dir, sub), { recursive: true });
+const ipCastRaw = loadProfile().ip_cast_dir;
+if (ipCastRaw) {
+  const ipCastDir = path.resolve(String(ipCastRaw).replace(/^~(?=\/|$)/, os.homedir()));
+  if (fs.existsSync(ipCastDir)) {
+    for (const item of ["chars", "ip-cast-rig.js", "ip-cast.css"]) {
+      const src = path.join(ipCastDir, item);
+      if (fs.existsSync(src)) fs.cpSync(src, path.join(dir, "assets", item), { recursive: true });
+    }
+  }
+}
 console.log(`✓ 工程 ${path.relative(process.cwd(), dir) || "."}`);
 console.log(`  motion-lib: ${motionLib} → lib/（fx.js、fx.css、字体、vendor、chrome-tall.sh）`);
 console.log(created.length ? `  新建：${created.join("、")}` : "  已有工程：只更新了 lib/");

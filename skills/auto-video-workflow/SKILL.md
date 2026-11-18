@@ -74,7 +74,7 @@ node SKILL/scripts/init-project.mjs <slug> --topic "主题"     # slug 用英文
 
 - 口播 60–90 秒，约 300–450 字，8–16 个分镜；开头 3–5 秒直接抛结果、反常识或硬数字。
 - 一个逗号一行字幕，每行 6–16 字。每个分镜用 `{花括号}` 标 1–2 个重点词。
-- 单人讲解不用写 `speaker` 和 `voices`；双人对话给每句写 `speaker`，在 `voices` 里给两个角色配不同音色。
+- 单人讲解不用写 `speaker` 和 `voices`；双人或多人对话给每句写 `speaker`，在 `voices` 里给每个角色配不同音色。
 - `publish.title` 不超过 20 个字符；`tags` 3–5 个；`cover` 三要素按 `copywriting.md` 写。
 - 加载到了 `strategy.md` 就把它的要求自然地融进文案和简介。
 
@@ -86,7 +86,7 @@ node SKILL/scripts/init-project.mjs <slug> --topic "主题"     # slug 用英文
 node SKILL/scripts/tts.mjs <工程>
 ```
 
-默认用豆包语音、1.1 倍节奏。它会生成 `audio/voice.wav`，把每个分镜的 `start` / `end` / `duration` 和逐行字幕 `lines` 写回 `project.json`，并生成 `timing.js`（按逐字时间戳对齐的字幕数组和分镜时间）。终端会打印每个分镜的 `data-d`。
+默认用豆包语音、1.1 倍节奏。它会生成 `audio/voice.wav`，把每个分镜的 `start` / `end` / `duration` 和逐行字幕 `lines` 写回 `project.json`，并生成 `timing.js`（含逐字时间戳对齐的字幕 `subtitles`、分镜时间 `scenes`，以及按真实人声波形计算的 20fps 口型序列 `mouth`）。终端会打印每个分镜的 `data-d`。
 
 某个词读得不对：给那个分镜加 `"tts": "按想要的读法写的整句"`（`say` 仍用于字幕），重跑即可，没改的分镜会复用缓存。
 
@@ -95,14 +95,17 @@ node SKILL/scripts/tts.mjs <工程>
 先读 `references/motion-lib-guide.md`；用到不熟的动效去 motion-lib 的 `README.md`「动效目录」查，不要编动效名。
 
 1. **自己定皮肤和模块**（不问用户）：AI 工具/评测 → `theme-violet` 或 `theme-pixel`；深度观点/商业硬核 → `theme-gold`；清单科普/轻松故事 → `theme-paper`；宇宙/算力/宏大叙事 → `theme-space`。再决定要不要粒子、3D 场景、角色主持人。把选的皮肤写进 `project.json` 的 `theme`。
-2. **写 `<工程>/index.html`**：一个分镜一个 `<section class="scene" data-scene="S01" data-d="…">`，顺序和 `scenes` 一一对应，`data-d` 用第 3 步打印的真实秒数；字幕用 `FX.subtitles(AVW_TIMING.subtitles, { style })`。每个分镜的画面要对应这句话在讲的东西：数字就做成会动的图表或大数字，流程就做成步骤，对比就左右并排。
+2. **写 `<工程>/index.html`**：
+   - 一个分镜一个 `<section class="scene" data-scene="S01" data-d="…">`，顺序和 `scenes` 一一对应，`data-d` 用第 3 步打印的真实秒数；字幕用 `FX.subtitles(AVW_TIMING.subtitles, { style })`。
+   - **镜头形式有节奏切换**：有角色出镜时，交替编排「角色放大同台对手戏互动」「具体痛点/情境小剧场演绎」与「角色退场的全屏高清 B-roll 讲解」，切忌全程把小立绘钉死在底部角落配多卡片 PPT；角色口型直接用 `AVW_TIMING.mouth` 真实波形驱动，停顿必闭嘴。
+   - **手机竖屏小屏清晰度硬底线**：`1920×1080` 在竖屏刷到时会被缩小约 5 倍——坚持一屏一重点（单屏 ≤ 15 字，多了就拆分镜），主词 ≥ 72px、模块标题 ≥ 46px、正文标签 ≥ 36px，严禁 `< 32px` 小字段落，优先高对比深底实心色块。
 3. **截图自检**：
 
 ```bash
 node SKILL/scripts/snap.mjs <工程>
 ```
 
-**必须打开 `<工程>/snapshots/sheet.jpg` 亲眼看**，逐帧检查：文字没有溢出或重叠、元素都已入场、底部字幕没有压住主内容、没有空白或黑屏帧。有问题就改 `index.html` 重截，直到每一帧都干净。看不清的帧直接打开 `snapshots/` 里的原图。
+**必须打开 `<工程>/snapshots/sheet.jpg` 亲眼看**，逐帧检查：在不放大缩略图的情况下每一帧主文字都能一眼看清、没有溢出或重叠、元素都已入场、底部字幕没有压住主内容、角色嘴型干净无残影、没有空白或黑屏帧。有问题就删字放大改 `index.html` 重截，直到每一帧都干净。
 
 ## 第 5 步：配 BGM，渲染成片
 

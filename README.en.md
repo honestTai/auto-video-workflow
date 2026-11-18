@@ -54,7 +54,7 @@ Before writing a single line of copy, the workflow pulls your account's real **2
 <br />
 
 - **📊 Pre-Production 2s / 5s Bounce & Retention Diagnostics (Open-Source Built-In)**: Ships with `get_account_analytics` and `get_video_diagnosis` to pull real Creator Center metrics — **views, cover impressions, 2s bounce rate, 5s bounce rate (`bounce_rate_5s`), 5s completion rate, full completion rate, average watch duration, like/comment/collect/share/follow rates**, and **For-You vs. Search traffic shares** — automatically flagging bottlenecks before drafting the next script.
-- **🎙️ Voice-First Timeline (Zero Audio-Visual Drift)**: `tts.mjs` synthesizes voiceover and measures exact per-scene durations and word timestamps *before* `index.html` is written; `render.mjs` verifies every `<section data-d="...">` against the audio track prior to rendering.
+- **🎙️ Voice-First Timeline & Waveform Lip-Sync (Zero Drift)**: `tts.mjs` synthesizes voiceover, measures exact per-scene durations & word timestamps, and extracts a **20fps real audio-energy mouth envelope (`AVW_TIMING.mouth`)** *before* `index.html` is written; `render.mjs` verifies every `<section data-d="...">` against the audio track prior to rendering.
 - **👁️ Multimodal Contact-Sheet Self-QA (`snap.mjs`)**: Captures representative frames across every scene into a numbered contact sheet (`snapshots/sheet.jpg`) so the agent visually inspects overflow, contrast, and subtitle safe zones before full 60fps rendering.
 - **🔒 Clean Public/Private Separation (`.local/`)**: Account names, keyword pools, persona voice, and custom operational rules live in `.local/` (gitignored) or `~/.config/auto-video-workflow/`, keeping personal strategy 100% out of git history.
 
