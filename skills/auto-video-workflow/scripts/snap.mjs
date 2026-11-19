@@ -18,7 +18,7 @@ const times = scenes.map((s) => (s.start + (s.end - s.start) * frac).toFixed(2))
 
 const out = path.join(dir, "snapshots");
 fs.rmSync(out, { recursive: true, force: true });
-const r = spawnSync("npx", ["--yes", "hyperframes", "snapshot", "--at", times.join(","), "--no-end", "--output", "snapshots"], { cwd: dir, env: hyperframesEnv(dir), stdio: ["ignore", "pipe", "pipe"] });
+const r = spawnSync("npx", ["--yes", "hyperframes", "snapshot", "--at", times.join(","), "--no-end", "--output", "snapshots"], { cwd: dir, env: hyperframesEnv(dir), shell: process.platform === "win32", stdio: ["ignore", "pipe", "pipe"] });
 // 旧版 HyperFrames 不认 --output，截图在 .hyperframes/artifacts/snapshots/<批次>/ 下：取最新一批拷回 snapshots/
 const art = path.join(dir, ".hyperframes", "artifacts", "snapshots");
 const pngs = (d) => (fs.existsSync(d) ? fs.readdirSync(d).filter((f) => f.endsWith(".png")) : []);
@@ -33,7 +33,7 @@ if (!frames.length) die("截图失败\n" + String(r.stdout).slice(-600) + String
 
 const cols = Math.min(4, frames.length), rows = Math.ceil(frames.length / cols);
 const list = path.join(out, "_frames.txt");
-fs.writeFileSync(list, frames.map((f) => `file '${path.join(out, f).replace(/'/g, "'\\''")}'\nduration 1`).join("\n") + "\n");
+fs.writeFileSync(list, frames.map((f) => `file '${path.join(out, f).replace(/\\/g, "/").replace(/'/g, "'\\''")}'\nduration 1`).join("\n") + "\n");
 const sheet = path.join(out, "sheet.jpg");
 execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", list, "-vf", `scale=640:-2,tile=${cols}x${rows}`, "-frames:v", "1", "-q:v", "3", sheet]);
 fs.rmSync(list);

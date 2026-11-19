@@ -113,7 +113,7 @@ scenes.forEach((scene, i) => {
 
 // 3) 拼成一条完整配音
 const list = path.join(outDir, "_concat.txt");
-fs.writeFileSync(list, pieces.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join("\n"));
+fs.writeFileSync(list, pieces.map((f) => `file '${f.replace(/\\/g, "/").replace(/'/g, "'\\''")}'`).join("\n"));
 const voicePath = path.join(dir, "audio", "voice.wav");
 run("ffmpeg", ["-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", voicePath]);
 for (const f of fs.readdirSync(outDir)) if (f.startsWith("_")) fs.rmSync(path.join(outDir, f));

@@ -9,8 +9,8 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
-import { parseArgs, die, loadProfile, REPO_ROOT } from "./lib.mjs";
+import { fileURLToPath } from "node:url";
+import { parseArgs, die, loadProfile, configDir, REPO_ROOT } from "./lib.mjs";
 
 const { opts, rest } = parseArgs(process.argv.slice(2), ["topic", "root", "motion-lib"]);
 if (!rest[0]) die('用法: init-project.mjs <slug 或目录> [--topic "主题"] [--root videos] [--motion-lib 目录]');
@@ -18,20 +18,22 @@ const isSlug = /^[a-z0-9][a-z0-9-]*$/i.test(rest[0]);
 const dir = path.resolve(isSlug ? path.join(opts.root || "videos", rest[0]) : rest[0]);
 const slug = path.basename(dir);
 
-const isMotionLib = (d) => d && fs.existsSync(path.join(d, "new-project.sh")) && fs.existsSync(path.join(d, "fx.js"));
+const isMotionLib = (d) => d && fs.existsSync(path.join(d, "fx.js")) && fs.existsSync(path.join(d, "fx.css"));
 const candidates = [
   opts["motion-lib"], process.env.MOTION_LIB_DIR, loadProfile().motion_lib,
   path.join(REPO_ROOT, "motion-lib"), path.join(REPO_ROOT, "..", "motion-lib"),
   path.join(process.cwd(), "motion-lib"), path.join(process.cwd(), "..", "motion-lib"),
   path.join(os.homedir(), "motion-lib"),
-].filter(Boolean).map((d) => path.resolve(String(d).replace(/^~(?=\/|$)/, os.homedir())));
+].filter(Boolean).map((d) => path.resolve(String(d).replace(/^~(?=[/\\]|$)/, os.homedir())));
 const motionLib = candidates.find(isMotionLib);
 if (!motionLib) die("没有找到 motion-lib。先 git clone https://github.com/honestTai/motion-lib，再用 --motion-lib <目录> 或环境变量 MOTION_LIB_DIR 指给我。找过的位置：\n  " + candidates.join("\n  "));
 
-fs.mkdirSync(dir, { recursive: true });
-const sync = spawnSync("bash", [path.join(motionLib, "new-project.sh"), dir], { stdio: ["ignore", "pipe", "pipe"] });
-if (sync.status !== 0) die("同步 motion-lib 失败：" + String(sync.stderr).trim().split("\n").slice(-3).join(" "));
-const camSmoothSrc = path.join(path.dirname(new URL(import.meta.url).pathname), "cam-smooth.js");
+fs.mkdirSync(path.join(dir, "lib"), { recursive: true });
+for (const item of ["fx.js", "fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx.css", "chrome-tall.sh", "fonts", "vendor", "assets"]) {
+  const src = path.join(motionLib, item);
+  if (fs.existsSync(src)) fs.cpSync(src, path.join(dir, "lib", item), { recursive: true, force: true });
+}
+const camSmoothSrc = path.join(path.dirname(fileURLToPath(import.meta.url)), "cam-smooth.js");
 if (fs.existsSync(camSmoothSrc)) fs.copyFileSync(camSmoothSrc, path.join(dir, "lib", "cam-smooth.js"));
 
 const created = [];
@@ -101,13 +103,15 @@ writeNew("index.html", `<!doctype html>
 
 for (const sub of ["audio", "assets", "renders", "cover"]) fs.mkdirSync(path.join(dir, sub), { recursive: true });
 const ipCastRaw = loadProfile().ip_cast_dir;
-if (ipCastRaw) {
-  const ipCastDir = path.resolve(String(ipCastRaw).replace(/^~(?=\/|$)/, os.homedir()));
-  if (fs.existsSync(ipCastDir)) {
-    for (const item of ["chars", "ip-cast-rig.js", "ip-cast.css"]) {
-      const src = path.join(ipCastDir, item);
-      if (fs.existsSync(src)) fs.cpSync(src, path.join(dir, "assets", item), { recursive: true });
-    }
+const ipCastCandidates = [
+  ipCastRaw && path.resolve(String(ipCastRaw).replace(/^~(?=[/\\]|$)/, os.homedir())),
+  path.join(configDir(), "ip-cast"),
+].filter(Boolean);
+const ipCastDir = ipCastCandidates.find((d) => fs.existsSync(d));
+if (ipCastDir) {
+  for (const item of ["chars", "ip-cast-rig.js", "ip-cast.css"]) {
+    const src = path.join(ipCastDir, item);
+    if (fs.existsSync(src)) fs.cpSync(src, path.join(dir, "assets", item), { recursive: true });
   }
 }
 console.log(`✓ 工程 ${path.relative(process.cwd(), dir) || "."}`);

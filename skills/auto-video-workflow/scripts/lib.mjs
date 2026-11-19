@@ -9,8 +9,18 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 /** 仓库根目录（skills/auto-video-workflow/scripts 往上三级）；skill 被单独拷走时这个目录可能不是仓库 */
 export const REPO_ROOT = path.resolve(HERE, "..", "..", "..");
 
-/** 本机配置目录：豆包语音密钥 volc.env、BGM 曲库 bgm/、可选的 profile.json 和 strategy.md */
-export const configDir = () => process.env.AUTO_VIDEO_CONFIG_DIR || path.join(os.homedir(), ".config", "auto-video-workflow");
+/** 本机配置目录：豆包语音密钥 volc.env、BGM 曲库 bgm/、ip-cast/、profile.json 和 strategy.md
+ *  支持通过环境变量 AUTO_VIDEO_CONFIG_DIR 或 ~/.config/auto-video-workflow/.cloud-dir 指向 Google Drive 同步目录 */
+export const configDir = () => {
+  if (process.env.AUTO_VIDEO_CONFIG_DIR) return process.env.AUTO_VIDEO_CONFIG_DIR;
+  const def = path.join(os.homedir(), ".config", "auto-video-workflow");
+  const ptr = path.join(def, ".cloud-dir");
+  if (fs.existsSync(ptr)) {
+    const target = fs.readFileSync(ptr, "utf8").trim();
+    if (target && fs.existsSync(target)) return target;
+  }
+  return def;
+};
 
 /** 简单的命令行解析：--key value、--flag，其余是位置参数 */
 export function parseArgs(argv, valueFlags = []) {
@@ -50,6 +60,8 @@ export function findChrome() {
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
     "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser",
     "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, "Google", "Chrome", "Application", "chrome.exe"),
   ].find((f) => f && fs.existsSync(f));
 }
 
