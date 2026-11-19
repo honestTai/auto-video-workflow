@@ -46,7 +46,7 @@
 |---|---|---|
 | **Agent Skill**（[`skills/auto-video-workflow/`](skills/auto-video-workflow/)） | **8 ステップ自律ループ + 6 スクリプト** | Claude Code / Codex / Antigravity 対応：離脱率復習 → リサーチ → 台本 → 音声ロック → 画面生成 & 検品 → BGM 合成レンダリング → カバー → 投稿 |
 | **Douyin MCP**（[`mcp/`](mcp/) `douyin-video-mcp`） | **10 MCP ツール + CLI** | ローカル単一アカウント認証情報の再利用、**2 秒 / 5 秒離脱率・維持率分析**、**過去動画比較 & 流入経路診断**、検索、透かしなし保存、自動投稿 |
-| **映像仕様** | **1920×1080 · 60fps · H.264** | [`motion-lib`](https://github.com/honestTai/motion-lib)（190 エフェクト + 23 トランジション + 6 テーマ）+ `chrome-tall.sh` ビューポート補正 |
+| **映像仕様** | **1920×1080 · 60fps · H.264** | [`motion-lib`](https://github.com/honestTai/motion-lib)（194 エフェクト + 23 トランジション + 6 テーマ）+ `chrome-tall.sh` ビューポート補正 |
 | **音声・字幕仕様** | **文字単位タイムスタンプ · -16 LUFS** | 双方向ストリーミング TTS → `timing.js`；`-16 LUFS` 音声 + `-24 LUFS` 自動ダッキング BGM |
 
 ---
@@ -145,6 +145,7 @@ node $S/init-project.mjs my-video --topic "テーマ"
 node $S/tts.mjs videos/my-video
 node $S/check.mjs videos/my-video     # 機械チェック：エフェクト名の誤り、32px 未満の文字、カメラ到着時の空画面など
 node $S/snap.mjs videos/my-video
+node $S/sfx.mjs videos/my-video       # 効果音トラック：各エフェクトの発火時刻に合成した効果音を自動で付ける
 node $S/bgm.mjs list && node $S/bgm.mjs mix videos/my-video --track "keyword"
 node $S/render.mjs videos/my-video
 ```

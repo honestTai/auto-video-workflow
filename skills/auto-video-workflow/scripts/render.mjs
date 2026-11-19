@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 // 渲染 1080p 60fps 画面 → 合上配音/混音 → 核对成片
-// 用法: node render.mjs <工程目录> [--name 文件名] [--quality draft|looks|delivery] [--fps 60]
+// 用法: node render.mjs <工程目录> [--name 文件名] [--quality draft|looks|delivery] [--fps 60] [--grain 0]
+//   --grain 胶片颗粒强度（0 不加；写实 / 电影感皮肤用 2–4；像素风、矢量风保持 0）。颗粒在合成时用 ffmpeg 加，不在页面里画（页面里画会拖慢渲染、撑大文件）。
 // 输出: renders/<名字>.mp4（名字默认取 project.json 的 slug）
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync, execFileSync } from "node:child_process";
 import { parseArgs, die, readProject, writeProject, hyperframesEnv, HYPERFRAMES } from "./lib.mjs";
 
-const { opts, rest } = parseArgs(process.argv.slice(2), ["name", "quality", "fps"]);
+const { opts, rest } = parseArgs(process.argv.slice(2), ["name", "quality", "fps", "grain"]);
 const dir = path.resolve(rest[0] || ".");
 const project = readProject(dir);
 const name = opts.name || project.slug || path.basename(dir);
 const quality = opts.quality || "looks", fps = opts.fps || "60";
+const grain = Math.max(0, Math.min(12, parseFloat(opts.grain ?? project.meta?.grain ?? 0) || 0));
 const page = path.join(dir, "index.html");
 if (!fs.existsSync(page)) die("没有 index.html：先写分镜页面");
 if (typeof project.duration !== "number") die("分镜还没有时间：先跑 tts.mjs");
@@ -39,7 +41,7 @@ if (r.status !== 0 || !fs.existsSync(path.join(dir, silent))) fail(`渲染失败
 const probe = (f) => JSON.parse(execFileSync("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type,width,height,duration,r_frame_rate", "-of", "json", f]).toString()).streams;
 const picture = probe(path.join(dir, silent)).find((s) => s.codec_type === "video");
 // 音轨补静音到画面长度，再按画面长度截断：音画一样长
-const m = spawnSync("ffmpeg", ["-y", "-v", "error", "-i", path.join(dir, silent), "-i", audio, "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-af", "apad", "-c:a", "aac", "-b:a", "192k", "-t", String(picture.duration), "-movflags", "+faststart", file]);
+const m = spawnSync("ffmpeg", ["-y", "-v", "error", "-i", path.join(dir, silent), "-i", audio, "-map", "0:v", "-map", "1:a", ...(grain ? ["-vf", `noise=c0s=${grain}:allf=t`, "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-pix_fmt", "yuv420p"] : ["-c:v", "copy"]), "-af", "apad", "-c:a", "aac", "-b:a", "192k", "-t", String(picture.duration), "-movflags", "+faststart", file]);
 log += "\n--- 合成音轨 ---\n" + String(m.stderr);
 fs.rmSync(path.join(dir, silent), { force: true });
 if (m.status !== 0 || !fs.existsSync(file)) fail("合成音轨失败");

@@ -32,7 +32,7 @@ function loadCatalog() {
   new Function("window", fs.readFileSync(path.join(lib, "fx.js"), "utf8"))(win);
   const owner = new Map(), names = () => [...Object.keys(win.FX.fx), ...Object.keys(win.FX.trans).map((k) => "in:" + k), ...Object.keys(win.FX.make).map((k) => "make:" + k)];
   let seen = new Set(names());
-  for (const f of ["fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "cam-smooth.js"]) {
+  for (const f of ["fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-sound.js", "cam-smooth.js"]) {
     const file = path.join(lib, f);
     if (!fs.existsSync(file)) continue;
     try { new Function("window", "document", fs.readFileSync(file, "utf8"))(win, { createElement: fake, getElementById: () => null, head: { appendChild() {} } }); } catch { /* 需要完整浏览器环境的模块跳过，下面按源码里的注册语句补名字 */ }
@@ -90,7 +90,7 @@ blocks.forEach((b, i) => {
     needModule(id, t.name, `动效 ${t.name}`);
     if (t.time && !/^[+-]/.test(t.time) && d > 0 && parseFloat(t.time) > d + 0.01) err(id, `${tk} 的触发时间 ${t.time}s 超过了这个分镜的时长 ${d}s，不会生效`);
     last = !t.time ? 0 : t.time[0] === "+" ? last + parseFloat(t.time) : t.time[0] === "-" ? d + parseFloat(t.time) : parseFloat(t.time);
-    if (!["pup-talk", "talk", "lipsync", "rig-talk", "vrm-talk", "frames", "pup-idle"].includes(t.name)) events.push(last);
+    if (!["pup-talk", "talk", "lipsync", "rig-talk", "vrm-talk", "frames", "pup-idle", "sfx"].includes(t.name)) events.push(last);
     if (!overlay && (t.name === "cutaway" || t.name === "closeup")) {
       const fd = parseFloat((tk.match(/dur=([\d.]+)/) || [])[1] || (t.name === "cutaway" ? "1.8" : "1.1"));
       fulls.push({ id, name: t.name, a: clock + last, b: clock + last + fd, end: clock + d });

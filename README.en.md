@@ -46,7 +46,7 @@ Before writing a single line of copy, the workflow pulls your account's real **2
 |---|---|---|
 | **Agent Skill** ([`skills/auto-video-workflow/`](skills/auto-video-workflow/)) | **8-step loop + 8 CLI scripts** | Works across Claude Code, Codex, and Antigravity: analytics review → research → script → voice lock → motion HTML & QA → BGM render → 3:4 cover → publish |
 | **Douyin MCP** ([`mcp/`](mcp/) `douyin-video-mcp`) | **10 MCP tools + 1:1 CLI** | Local single-account credential store, **2s/5s bounce & retention analytics**, **per-video peer benchmark & traffic source diagnosis**, search, watermark-free download, and publishing |
-| **Visual & Render Spec** | **1920×1080 · 60fps · H.264** | Powered by [`motion-lib`](https://github.com/honestTai/motion-lib) (190 effects + 23 transitions + 6 themes) with `chrome-tall.sh` viewport compensation |
+| **Visual & Render Spec** | **1920×1080 · 60fps · H.264** | Powered by [`motion-lib`](https://github.com/honestTai/motion-lib) (194 effects + 23 transitions + 6 themes) with `chrome-tall.sh` viewport compensation |
 | **Audio & Subtitle Mastering** | **Word-level sync · -16 LUFS** | Bidirectional streaming WebSocket TTS → `timing.js`; `-16 LUFS` voice + `-24 LUFS` sidechain-ducked BGM |
 
 <details open>
@@ -193,6 +193,7 @@ node $S/init-project.mjs my-video --topic "Topic"
 node $S/tts.mjs videos/my-video
 node $S/check.mjs videos/my-video     # machine lint: unknown effect names, text under 32px, empty frames on camera arrival…
 node $S/snap.mjs videos/my-video
+node $S/sfx.mjs videos/my-video       # effects track: every effect gets a synthesised sound at the moment it fires
 node $S/bgm.mjs list && node $S/bgm.mjs mix videos/my-video --track "keyword"
 node $S/render.mjs videos/my-video
 ```

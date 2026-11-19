@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // 新建一条视频的工程目录，并把 motion-lib 的运行时同步到工程的 lib/
-// 用法: node init-project.mjs <slug 或目录> [--topic "主题"] [--root videos] [--motion-lib <motion-lib 目录>] [--stage]
+// 用法: node init-project.mjs <slug 或目录> [--topic "主题"] [--root videos] [--motion-lib <motion-lib 目录>] [--stage | --oner]
+//   --oner   index.html 用舞台剧「一镜到底」拍法的骨架（一栋楼 + 不剪的长镜头，见 references/stage-play.md 第 3.5 节）
 //   --stage  index.html 用舞台剧片型的骨架（见 references/stage-play.md）；工程里已有带时间的 project.json 时，会按分镜预填好 data-d 和每句台词的时间
 //   <slug>   只含字母数字和连字符时，工程建在 <root>/<slug>/（root 默认是当前目录下的 videos/）；传路径则直接用该目录
 // 已有工程再跑一次 = 只把 lib/ 更新到最新版，不动 project.json、script.md 和 index.html。
@@ -30,7 +31,7 @@ const motionLib = candidates.find(isMotionLib);
 if (!motionLib) die("没有找到 motion-lib。先 git clone https://github.com/honestTai/motion-lib，再用 --motion-lib <目录> 或环境变量 MOTION_LIB_DIR 指给我。找过的位置：\n  " + candidates.join("\n  "));
 
 fs.mkdirSync(path.join(dir, "lib"), { recursive: true });
-for (const item of ["fx.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx.css", "chrome-tall.sh", "fonts", "vendor", "assets"]) {
+for (const item of ["fx.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-sound.js", "sfx.mjs", "fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx.css", "chrome-tall.sh", "fonts", "vendor", "assets"]) {
   const src = path.join(motionLib, item);
   if (fs.existsSync(src)) fs.cpSync(src, path.join(dir, "lib", item), { recursive: true, force: true });
 }
@@ -76,16 +77,29 @@ writeNew("script.md", `# ${opts.topic || slug}
 - 封面：引导小字 / 主标题 / 印章
 `);
 
-if (opts.stage) {
+const WORLD = (total) => `  <!-- 世界：一栋楼。每个 backdrop 是一个房间（4–6 个，每章一个），data-cell="列,层" 决定它在楼里的位置：
+       同层相邻 = 镜头横移穿墙，上下层 = 镜头升降穿楼板。按讲述顺序摆成一条走得通的路线（比如上层 1 2 3、下层 5 4）。
+       下面三个是程序画的占位场景：换成这一期生成的背景图（data-src="assets/stage/xxx.jpg"），并填上氛围属性 -->
+  <section class="scene overlay" data-t="0" data-d="${total}">
+    <div data-make="house">
+      <div data-make="backdrop" data-cell="0,0" data-kind="night" data-focus="tilt" data-grade="plain" data-weather="dust"></div>
+      <div data-make="backdrop" data-cell="1,0" data-kind="room" data-focus="tilt" data-grade="warm" data-weather="rays dust"></div>
+      <div data-make="backdrop" data-cell="1,1" data-kind="city" data-focus="tilt" data-grade="dusk" data-weather="fireflies"></div>
+    </div>
+  </section>
+
+`;
+if (opts.stage || opts.oner) {
+  const oner = Boolean(opts.oner);
   const pj = path.join(dir, "project.json");
   const project = fs.existsSync(pj) ? JSON.parse(fs.readFileSync(pj, "utf8")) : {};
   const timed = (project.scenes || []).filter((s) => typeof s.duration === "number");
   const cast = Boolean(ipCastDir);           // 本机配置里有账号自己的角色素材包
   const total = timed.length ? (project.duration || timed.reduce((n, s) => n + s.duration, 0)) : 4;
-  const sections = (timed.length ? timed : [{ id: "S01", duration: 4, say: "" }]).map((s) => {
+  const sections = (timed.length ? timed : [{ id: "S01", duration: 4, say: "" }]).map((s, k) => {
     const lines = (s.lines || []).map((l) => `       ${(l.start - (s.start || 0)).toFixed(2).padStart(5)}  ${l.text}`).join("\n");
     const fx = cast ? "" : `call@0(who=host) pup-talk@0.1(who=host,dur=${Math.max(0.5, s.duration - 0.2).toFixed(2)})`;
-    return `  <!-- ${s.id} · ${s.speaker || "host"} 说 · ${s.duration}s${lines ? "\n" + lines : ""} -->\n  <section class="scene" data-scene="${s.id}" data-d="${s.duration}" data-fx="${fx}">\n  </section>\n`;
+    return `  <!-- ${s.id} · ${s.speaker || "host"} 说 · ${s.duration}s${lines ? "\n" + lines : ""} -->\n  <section class="scene${oner ? " clear" : ""}" data-scene="${s.id}" data-d="${s.duration}"${oner && k < 2 ? ` data-room="${k ? 1 : "all"}"` : ""} data-fx="${fx}">\n  </section>\n`;
   }).join("\n");
   writeNew("index.html", `<!doctype html>
 <html lang="zh">
@@ -99,20 +113,21 @@ if (opts.stage) {
 <script src="lib/fx-world.js"></script>     <!-- 只用它的 wake / push-back / zoom-here；不写 data-world 就不会启用世界画布 -->
 <script src="lib/fx-puppet.js"></script>    <!-- 主持人 -->
 <script src="lib/fx-stage.js"></script>     <!-- 场景、画中画、小演员 -->
+${oner ? '<script src="lib/fx-oner.js"></script>      <!-- 一镜到底：一栋楼 + 不剪的长镜头（要放在 fx-sound.js 前面） -->\n' : ""}<script src="lib/fx-sound.js"></script>     <!-- 音效层：每个动效自带声音，跑 sfx.mjs 生成音效轨 -->
 <script src="timing.js"></script>${cast ? '\n<script src="assets/ip-cast-rig.js"></script>' : ""}
 <style>
   /* 这条片子自己的样式写这里。字号下限 32px；内容放在画面右边 2/3（x ≥ 640），左下角是主持人 */
 </style>
 </head>
 <body>
-<!-- 舞台剧片型：分镜之间硬切；换场景背景时在后一个分镜上写 data-in="mosaic"。写法、零件、分镜表见 references/stage-play.md，样板见 references/recipes-stage/index.html。
+${oner ? "<!-- 一镜到底拍法：分镜写成 scene clear、只放道具；data-room 说这一镜在哪个房间（不写 = 还在上一个房间，all = 楼外全景），换房间时镜头自己走。\n     不写 data-in，不用 closeup / cutaway：特写换成 cam@秒(x=±200,z=1.14,blur=3) 朝说话的人推，插画换成 push-into 推进照片里。详见 references/stage-play.md 第 3.5 节 -->\n" : ""}<!-- 舞台剧片型：分镜之间硬切；换场景背景时在后一个分镜上写 data-in="mosaic"。写法、零件、分镜表见 references/stage-play.md，样板见 references/recipes-stage/index.html。
      每个分镜上面的注释是这个分镜的台词和每句的开始秒数（相对分镜开头）：@秒数 直接照着写 -->
-<div id="root" class="theme-pixel" data-composition-id="main" data-width="1920" data-height="1080" data-fps="60" data-mode="stage">
+<div id="root" class="theme-pixel" data-composition-id="main" data-width="1920" data-height="1080" data-fps="60" data-mode="stage"${oner ? ' data-sound="cinema"' : ""}>
 
-${sections}
+${oner ? WORLD(total) : ""}${sections}
   <!-- 常驻层：进度线（data-n = 章节数；segment 的时间是全片的绝对秒数）+ 主持人 -->
   <section class="scene overlay" data-t="0" data-d="${total}">
-    <div class="abs" style="left:60px;right:60px;top:30px" data-make="segments" data-n="4" data-fx="segment@0(i=1)"></div>
+${oner ? '    <div data-make="letterbox" data-h="96"></div>        <!-- 电影画幅的上下黑边；分镜里的字不要进黑边 -->\n' : ""}    <div class="abs" style="left:60px;right:60px;top:30px" data-make="segments" data-n="4" data-fx="segment@0(i=1)"></div>
     ${cast ? '<div id="ip-stage"></div>' : '<div data-make="actor" data-name="host" data-src="lib/assets/puppet/bot" data-poses="wave/point/think/cheer" data-eyes="238,236,64,76,#7fe7ff/362,236,64,76,#7fe7ff" data-neck="300,400" data-home="-10,0,640"></div>'}
   </section>
 
@@ -135,6 +150,7 @@ writeNew("index.html", `<!doctype html>
 <script src="lib/vendor/gsap.min.js"></script>
 <script src="lib/fx.js"></script>
 <script src="lib/fx-world.js"></script>
+<script src="lib/fx-sound.js"></script>
 <script src="lib/fx-puppet.js"></script>
 <!-- 按需加载：粒子 lib/fx-particles.js；真 3D 依次加 lib/vendor/three-fx.min.js（放在 fx.js 前）和 lib/fx-3d.js -->
 <script src="timing.js"></script>
@@ -180,4 +196,4 @@ if (ipCastDir) {
 console.log(`✓ 工程 ${path.relative(process.cwd(), dir) || "."}`);
 console.log(`  motion-lib: ${motionLib} → lib/（fx.js、fx.css、字体、vendor、chrome-tall.sh）`);
 console.log(created.length ? `  新建：${created.join("、")}` : "  已有工程：只更新了 lib/");
-console.log("  接着：写 script.md 和 project.json 的 scenes → tts.mjs → 写 index.html → check.mjs → snap.mjs → bgm.mjs mix → render.mjs");
+console.log("  接着：写 script.md 和 project.json 的 scenes → tts.mjs → 写 index.html → check.mjs → snap.mjs → sfx.mjs → bgm.mjs mix → render.mjs");

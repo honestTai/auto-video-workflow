@@ -5,9 +5,10 @@
 //        导入并分析（时长、响度、估算 BPM、动态）。同名文件已在库里就只更新标签。
 //   node bgm.mjs list                     列出曲库里的曲目和特征，供选曲
 //   node bgm.mjs tag <曲名关键词> --tags a,b [--mood "…"] [--vocal|--no-vocal]
-//   node bgm.mjs mix <工程目录> [--track <曲名关键词>] [--level -24] [--start 秒] [--no-duck]
+//   node bgm.mjs mix <工程目录> [--track <曲名关键词>] [--level -24] [--start 秒] [--no-duck] [--sfx 0] [--no-sfx]
 //        人声统一到 -16 LUFS，垫乐 -24 LUFS，人声出现时自动压低约 4–5 dB，片头淡入、片尾淡出，
-//        输出 audio/mix.wav 并登记到 project.json。曲库是空的就跳过混音，成片直接用纯人声。
+//        工程里有 audio/sfx.wav（sfx.mjs 生成的音效轨）就一起混进去，--sfx 是音效轨整体加减的分贝数。
+//        输出 audio/mix.wav 并登记到 project.json。曲库是空的、也没有音效轨，就跳过混音，成片直接用纯人声。
 //
 // 曲库位置：环境变量 AUTO_VIDEO_BGM_DIR，默认 ~/.config/auto-video-workflow/bgm/。音乐文件只在本机，不随仓库分发。
 import fs from "node:fs";
@@ -16,7 +17,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { parseArgs, die, configDir, readProject, writeProject, estimateBpm } from "./lib.mjs";
 
 const cmd = process.argv[2];
-const { opts, rest: positional } = parseArgs(process.argv.slice(3), ["tags", "mood", "track", "level", "start"]);
+const { opts, rest: positional } = parseArgs(process.argv.slice(3), ["tags", "mood", "track", "level", "start", "sfx"]);
 const LIB = process.env.AUTO_VIDEO_BGM_DIR || path.join(configDir(), "bgm");
 const INDEX = path.join(LIB, "index.json");
 const AUDIO_EXT = /\.(mp3|m4a|aac|wav|flac|ogg|opus|aiff?)$/i;
@@ -83,7 +84,20 @@ if (cmd === "add") {
   const voice = path.join(dir, "audio", "voice.wav");
   if (!fs.existsSync(voice) || typeof project.duration !== "number") die("还没有配音：先跑 tts.mjs");
   const list = load();
-  if (!list.length) { console.log(`! BGM 曲库是空的（${LIB}），跳过混音：成片用纯人声 audio/voice.wav`); process.exit(0); }
+  const sfxFile = path.join(dir, "audio", "sfx.wav"), hasSfx = fs.existsSync(sfxFile) && !opts["no-sfx"];
+  const sfxLevel = parseFloat(opts.sfx ?? project.meta?.sfx?.level ?? 0); // 音效轨整体加减多少 dB
+  if (!list.length) {
+    if (!hasSfx) { console.log(`! BGM 曲库是空的（${LIB}），跳过混音：成片用纯人声 audio/voice.wav`); process.exit(0); }
+    // 没有曲库但有音效轨：人声 + 音效
+    const total = project.duration + (project.meta?.tail ?? 0.4), vg = (-16 - loudness(voice).lufs).toFixed(2), out = path.join(dir, "audio", "mix.wav");
+    const graph = `[0:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=${vg}dB,apad=whole_dur=${total.toFixed(2)}[vox];[1:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=${sfxLevel}dB[sfx];[vox][sfx]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.84:level=disabled[mix]`;
+    const r = spawnSync("ffmpeg", ["-v", "error", "-y", "-i", voice, "-i", sfxFile, "-filter_complex", graph, "-map", "[mix]", "-c:a", "pcm_s16le", out]);
+    if (r.status !== 0) die("混音失败：" + r.stderr.toString().trim().split("\n").slice(-3).join(" "));
+    project.audio = { ...project.audio, mix: "audio/mix.wav" }; project.meta = { ...project.meta, sfx: { ...project.meta?.sfx, level: sfxLevel } };
+    writeProject(dir, project);
+    console.log(`✓ audio/mix.wav  ${seconds(out).toFixed(1)}s  人声 + 音效（BGM 曲库是空的，没有垫乐）  整体 ${loudness(out).lufs} LUFS`);
+    process.exit(0);
+  }
   const key = opts.track || project.meta?.bgm?.track;
   if (!key) die("没指定曲目：先跑 bgm.mjs list 按内容情绪选一首，再传 --track <曲名关键词>");
   const item = find(list, key), src = path.join(LIB, item.file);
@@ -103,16 +117,17 @@ if (cmd === "add") {
   const vox = `[0:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=${voiceGain}dB,apad=whole_dur=${total.toFixed(2)},asplit=2[vox][key]`;
   // 人声一出现，音乐自动让开约 4–5 dB；人声停顿时慢慢回来
   const ducked = duck ? `[bed][key]sidechaincompress=threshold=0.06:ratio=2.2:attack=25:release=450:makeup=1[bgm]` : `[key]anullsink;[bed]anull[bgm]`;
-  const graph = `${vox};${bed};${ducked};[vox][bgm]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.84:level=disabled[mix]`;
+  const fx = hasSfx ? `;[2:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=${sfxLevel}dB[sfx]` : "";
+  const graph = `${vox};${bed};${ducked}${fx};[vox][bgm]${hasSfx ? "[sfx]" : ""}amix=inputs=${hasSfx ? 3 : 2}:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.84:level=disabled[mix]`;
   const out = path.join(dir, "audio", "mix.wav");
-  const r = spawnSync("ffmpeg", ["-v", "error", "-y", "-i", voice, "-ss", String(start), "-i", src, "-filter_complex", graph, "-map", "[mix]", "-c:a", "pcm_s16le", out]);
+  const r = spawnSync("ffmpeg", ["-v", "error", "-y", "-i", voice, "-ss", String(start), "-i", src, ...(hasSfx ? ["-i", sfxFile] : []), "-filter_complex", graph, "-map", "[mix]", "-c:a", "pcm_s16le", out]);
   if (r.status !== 0) die("混音失败：" + r.stderr.toString().trim().split("\n").slice(-3).join(" "));
   const m = loudness(out);
-  project.meta = { ...project.meta, bgm: { track: item.title, level, start, duck } };
+  project.meta = { ...project.meta, bgm: { track: item.title, level, start, duck }, ...(hasSfx ? { sfx: { ...project.meta?.sfx, level: sfxLevel } } : {}) };
   project.audio = { ...project.audio, mix: "audio/mix.wav" };
   writeProject(dir, project);
   console.log(`✓ audio/mix.wav  ${seconds(out).toFixed(1)}s  整体 ${m.lufs} LUFS，峰值 ${m.peak} dBTP`);
-  console.log(`  曲目：${item.title}（约 ${item.bpm ?? "?"} BPM，${item.tags.join("、") || "无标签"}）${loop ? "，已循环" : ""}，从 ${start}s 开始，垫乐 ${level} LUFS${duck ? "，人声下自动压低" : ""}`);
+  console.log(`  曲目：${item.title}（约 ${item.bpm ?? "?"} BPM，${item.tags.join("、") || "无标签"}）${loop ? "，已循环" : ""}，从 ${start}s 开始，垫乐 ${level} LUFS${duck ? "，人声下自动压低" : ""}${hasSfx ? `，已混入音效轨（${sfxLevel >= 0 ? "+" : ""}${sfxLevel} dB）` : ""}`);
 } else {
   console.log(fs.readFileSync(new URL(import.meta.url), "utf8").split("\n").slice(1, 12).map((l) => l.replace(/^\/\/ ?/, "")).join("\n"));
   process.exit(cmd ? 2 : 0);
