@@ -46,7 +46,7 @@ Before writing a single line of copy, the workflow pulls your account's real **2
 |---|---|---|
 | **Agent Skill** ([`skills/auto-video-workflow/`](skills/auto-video-workflow/)) | **8-step loop + 8 CLI scripts** | Works across Claude Code, Codex, and Antigravity: analytics review → research → script → voice lock → motion HTML & QA → BGM render → 3:4 cover → publish |
 | **Douyin MCP** ([`mcp/`](mcp/) `douyin-video-mcp`) | **10 MCP tools + 1:1 CLI** | Local single-account credential store, **2s/5s bounce & retention analytics**, **per-video peer benchmark & traffic source diagnosis**, search, watermark-free download, and publishing |
-| **Visual & Render Spec** | **1920×1080 · 60fps · H.264** | Powered by [`motion-lib`](https://github.com/honestTai/motion-lib) (194 effects + 23 transitions + 6 themes) with `chrome-tall.sh` viewport compensation |
+| **Visual & Render Spec** | **1920×1080 · 60fps · H.264** | Powered by [`motion-lib`](https://github.com/honestTai/motion-lib) (217 effects + 23 transitions + 6 themes) with `chrome-tall.sh` viewport compensation |
 | **Audio & Subtitle Mastering** | **Word-level sync · -16 LUFS** | Bidirectional streaming WebSocket TTS → `timing.js`; `-16 LUFS` voice + `-24 LUFS` sidechain-ducked BGM |
 
 <details open>
@@ -102,8 +102,8 @@ Most automated video pipelines fail in three places: **publishing blindly withou
 2. **Dual-Channel Fact Research**: Searches top-liked & latest Douyin videos (`search_videos`) + primary web sources with recorded citations.
 3. **Copywriting & Packaging**: Writes `script.md` (analytics takeaways + cited script) and `project.json` (scenes, ≤20-char title, tags, 3-part cover copy).
 4. **Voice-First Timeline Lock**: `tts.mjs` generates `audio/voice.wav` + word-aligned `timing.js` and writes exact scene durations back to `project.json`.
-5. **Declarative Scene Authoring & Visual QA**: Authors `index.html` with `motion-lib`, then runs `snap.mjs` to inspect `snapshots/sheet.jpg`.
-6. **BGM Ducking & 60fps Rendering**: `bgm.mjs` mixes `-16 LUFS` vocals over `-24 LUFS` ducked BGM; `render.mjs` outputs `1920×1080` `60fps` MP4 and validates via `ffprobe`.
+5. **Declarative Scene Authoring & Visual QA**: Picks the film type (a one-take stage play when the account has recurring characters, a world canvas for data-only videos), acts each line out with a ready-made part (chat window, terminal, code diff, ranking swap, overload…), authors `index.html` with `motion-lib`, then runs `check.mjs` and inspects `snapshots/sheet.jpg` against the aesthetic rules.
+6. **Beat Sync, Sound Design, BGM Ducking & 60fps Rendering**: `bgm.mjs pick` measures the music's beat grid so camera moves land on beats, `sfx.mjs` synthesises a sound for every effect, and `bgm.mjs mix` mixes `-16 LUFS` vocals and the effects track over `-24 LUFS` ducked BGM; `render.mjs` outputs `1920×1080` `60fps` MP4 and validates via `ffprobe`.
 7. **3:4 Vertical Cover**: Extracts reference frames, generates and crops a `1080×1440` cover (`cover-3x4.png`), and verifies every character on the poster.
 8. **Automated Douyin Publishing**: Uploads via `publish_video` (supports public, private, scheduled, or `dry_run=true`) — feeding fresh playback data back into Step 1.
 
@@ -193,9 +193,10 @@ node $S/init-project.mjs my-video --topic "Topic"
 node $S/tts.mjs videos/my-video
 node $S/check.mjs videos/my-video     # machine lint: unknown effect names, text under 32px, empty frames on camera arrival…
 node $S/snap.mjs videos/my-video
+node $S/bgm.mjs list && node $S/bgm.mjs pick videos/my-video --track "keyword"   # choose the music and measure its beats (beats.js)
 node $S/sfx.mjs videos/my-video       # effects track: every effect gets a synthesised sound at the moment it fires
-node $S/bgm.mjs list && node $S/bgm.mjs mix videos/my-video --track "keyword"
-node $S/render.mjs videos/my-video
+node $S/bgm.mjs mix videos/my-video
+node $S/render.mjs videos/my-video --grain 2   # optional film grain (none for pixel art)
 ```
 
 ## 🔒 Local Private Configuration (`.local/`)

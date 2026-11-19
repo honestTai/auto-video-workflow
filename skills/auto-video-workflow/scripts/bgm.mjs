@@ -5,16 +5,19 @@
 //        导入并分析（时长、响度、估算 BPM、动态）。同名文件已在库里就只更新标签。
 //   node bgm.mjs list                     列出曲库里的曲目和特征，供选曲
 //   node bgm.mjs tag <曲名关键词> --tags a,b [--mood "…"] [--vocal|--no-vocal]
+//   node bgm.mjs pick <工程目录> --track <曲名关键词> [--start 秒]
+//        选定曲子并量出拍子，写成 beats.js（页面加载它以后，一镜到底的换场、推进照片会自动落在拍子上）。先 pick，再 sfx.mjs，最后 mix。
 //   node bgm.mjs mix <工程目录> [--track <曲名关键词>] [--level -24] [--start 秒] [--no-duck] [--sfx 0] [--no-sfx]
 //        人声统一到 -16 LUFS，垫乐 -24 LUFS，人声出现时自动压低约 4–5 dB，片头淡入、片尾淡出，
 //        工程里有 audio/sfx.wav（sfx.mjs 生成的音效轨）就一起混进去，--sfx 是音效轨整体加减的分贝数。
+//        同时量出 BGM 的节拍写成 beats.js（卡点：页面加载它以后，一镜到底的换场、推进照片会自动落在拍子上）。
 //        输出 audio/mix.wav 并登记到 project.json。曲库是空的、也没有音效轨，就跳过混音，成片直接用纯人声。
 //
 // 曲库位置：环境变量 AUTO_VIDEO_BGM_DIR，默认 ~/.config/auto-video-workflow/bgm/。音乐文件只在本机，不随仓库分发。
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
-import { parseArgs, die, configDir, readProject, writeProject, estimateBpm } from "./lib.mjs";
+import { parseArgs, die, configDir, readProject, writeProject, estimateBpm, beatGrid } from "./lib.mjs";
 
 const cmd = process.argv[2];
 const { opts, rest: positional } = parseArgs(process.argv.slice(3), ["tags", "mood", "track", "level", "start", "sfx"]);
@@ -44,6 +47,11 @@ const find = (list, key) => {
   if (hits.length > 1) die(`"${key}" 匹配到多首：${hits.map((t) => t.file).join("、")}`);
   return hits[0];
 };
+/** 页面用的节拍表：<script src="beats.js"></script> 之后 window.FX_BEATS 就是 { bpm, beats, downbeats, hits }，没有 BGM 时是 null */
+function writeBeats(dir, grid) {
+  const body = grid ? JSON.stringify({ bpm: grid.bpm, offset: grid.offset, beats: grid.beats, downbeats: grid.downbeats, hits: grid.hits }) : "null";
+  fs.writeFileSync(path.join(dir, "beats.js"), "// bgm.mjs mix 生成：BGM 在成片里的拍点（秒）。没有 BGM 时是 null。不要手改，换曲子或改 --start 后重跑 bgm.mjs mix\nwindow.FX_BEATS = " + body + ";\n");
+}
 const tagsOf = (v) => String(v || "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean);
 const tempoWord = (bpm) => (bpm == null ? "未知" : bpm < 90 ? "慢" : bpm < 115 ? "中速" : bpm < 140 ? "轻快" : "快");
 
@@ -78,6 +86,21 @@ if (cmd === "add") {
   if (opts["no-vocal"]) item.vocal = false;
   save(list);
   console.log(`✓ ${item.title}  标签：${item.tags.join("、")}${item.mood ? `  ${item.mood}` : ""}  ${item.vocal ? "有人声" : "无人声"}`);
+} else if (cmd === "pick") {
+  // 选曲 + 量拍子：先定曲子、写好 beats.js，后面 sfx.mjs 生成的音效和页面里的换场才能对上拍子；最后再 mix
+  const dir = path.resolve(positional[0] || ".");
+  const project = readProject(dir), list = load();
+  if (!list.length) { console.log(`! BGM 曲库是空的（${LIB}）：没有曲子可选，成片用纯人声`); writeBeats(dir, null); process.exit(0); }
+  const key = opts.track || project.meta?.bgm?.track;
+  if (!key) die("没指定曲目：先跑 bgm.mjs list 按内容情绪选一首，再传 --track <曲名关键词>");
+  if (typeof project.duration !== "number") die("还没有配音：先跑 tts.mjs");
+  const item = find(list, key), start = parseFloat(opts.start || project.meta?.bgm?.start || 0), total = project.duration + (project.meta?.tail ?? 0.4);
+  const grid = beatGrid(path.join(LIB, item.file), start, total);
+  writeBeats(dir, grid);
+  project.meta = { ...project.meta, bgm: { ...project.meta?.bgm, track: item.title, start }, ...(grid ? { beats: { bpm: grid.bpm, offset: grid.offset, match: grid.match, hits: grid.hits } } : {}) };
+  writeProject(dir, project);
+  console.log(`✓ 选定 ${item.title}，从 ${start}s 开始` + (grid ? `；${grid.bpm} BPM，拍点吻合 ${Math.round(grid.match * 100)}%，最重的几下在 ${grid.hits.join("s、")}s → beats.js` : "；没量出拍子（曲子太短或太安静），不卡点"));
+  console.log("  下一步：node sfx.mjs <工程> → node bgm.mjs mix <工程>");
 } else if (cmd === "mix") {
   const dir = path.resolve(positional[0] || ".");
   const project = readProject(dir);
@@ -94,6 +117,7 @@ if (cmd === "add") {
     const r = spawnSync("ffmpeg", ["-v", "error", "-y", "-i", voice, "-i", sfxFile, "-filter_complex", graph, "-map", "[mix]", "-c:a", "pcm_s16le", out]);
     if (r.status !== 0) die("混音失败：" + r.stderr.toString().trim().split("\n").slice(-3).join(" "));
     project.audio = { ...project.audio, mix: "audio/mix.wav" }; project.meta = { ...project.meta, sfx: { ...project.meta?.sfx, level: sfxLevel } };
+    writeBeats(dir, null);
     writeProject(dir, project);
     console.log(`✓ audio/mix.wav  ${seconds(out).toFixed(1)}s  人声 + 音效（BGM 曲库是空的，没有垫乐）  整体 ${loudness(out).lufs} LUFS`);
     process.exit(0);
@@ -125,8 +149,14 @@ if (cmd === "add") {
   const m = loudness(out);
   project.meta = { ...project.meta, bgm: { track: item.title, level, start, duck }, ...(hasSfx ? { sfx: { ...project.meta?.sfx, level: sfxLevel } } : {}) };
   project.audio = { ...project.audio, mix: "audio/mix.wav" };
+  // 卡点：量出这首曲子在成片里的拍子，写成 beats.js 给页面用（换场、推进照片会自动对到最近的拍子上）
+  let grid = null;
+  try { grid = beatGrid(src, start, total); } catch (e) { console.log("! 节拍分析失败：" + String(e.message || e).split("\n")[0]); }
+  writeBeats(dir, grid);
+  if (grid) project.meta = { ...project.meta, beats: { bpm: grid.bpm, offset: grid.offset, match: grid.match, hits: grid.hits } };
   writeProject(dir, project);
   console.log(`✓ audio/mix.wav  ${seconds(out).toFixed(1)}s  整体 ${m.lufs} LUFS，峰值 ${m.peak} dBTP`);
+  if (grid) console.log(`  卡点：${grid.bpm} BPM，第一拍 ${grid.offset}s，${grid.beats.length} 拍 / ${grid.downbeats.length} 个重拍，拍点吻合 ${Math.round(grid.match * 100)}%，最重的几下在 ${grid.hits.join("s、")}s → beats.js`);
   console.log(`  曲目：${item.title}（约 ${item.bpm ?? "?"} BPM，${item.tags.join("、") || "无标签"}）${loop ? "，已循环" : ""}，从 ${start}s 开始，垫乐 ${level} LUFS${duck ? "，人声下自动压低" : ""}${hasSfx ? `，已混入音效轨（${sfxLevel >= 0 ? "+" : ""}${sfxLevel} dB）` : ""}`);
 } else {
   console.log(fs.readFileSync(new URL(import.meta.url), "utf8").split("\n").slice(1, 12).map((l) => l.replace(/^\/\/ ?/, "")).join("\n"));

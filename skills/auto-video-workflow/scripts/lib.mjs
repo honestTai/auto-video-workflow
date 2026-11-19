@@ -205,3 +205,68 @@ export function extractMouthEnvelope(file, fps = 12) {
   }
   return { fps, frames: Array.from(states).join("") };
 }
+
+/**
+ * 卡点：给 BGM 量出节拍网格。返回 { bpm, offset, beats[], downbeats[], hits[], match }，时间都是成片里的秒数。
+ * file = 曲子，start = 从曲子第几秒开始用，total = 成片总长（曲子不够长时按 bgm.mjs 的做法循环）。
+ * 做法：低频（底鼓）和全频的能量起伏 → 自相关求拍长 → 在所有拍点上找最响的相位 → 用实际起拍点做最小二乘拟合，
+ * 拍长和相位都由整首拟合出来（单看 tempo 估计会有 1–2% 的偏差，拍子越往后错得越多）。
+ * 再按底鼓能量定出每小节的第一拍（重拍）和全片最重的几下（hits）。
+ */
+export function beatGrid(file, start, total) {
+  const sr = 11025, hop = 128, fps = sr / hop;
+  const raw = execFileSync("ffmpeg", ["-v", "error", "-stream_loop", "-1", "-ss", String(start || 0), "-t", String(total), "-i", file, "-ac", "1", "-ar", String(sr), "-f", "f32le", "-"], { maxBuffer: 512 * 1024 * 1024 });
+  const pcm = new Float32Array(raw.buffer, raw.byteOffset, Math.floor(raw.length / 4));
+  const n = Math.floor(pcm.length / hop);
+  if (n < fps * 8) return null;
+  const a = 1 - Math.exp((-2 * Math.PI * 150) / sr);
+  let l1 = 0, l2 = 0;
+  const E = new Float32Array(n), Lw = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    let s = 0, sl = 0;
+    for (let k = 0; k < hop; k++) { const v = pcm[i * hop + k]; l1 += a * (v - l1); l2 += a * (l1 - l2); s += v * v; sl += l2 * l2; }
+    E[i] = Math.log10(1e-9 + s / hop); Lw[i] = Math.log10(1e-9 + sl / hop);
+  }
+  const O = new Float32Array(n), K = new Float32Array(n);
+  for (let i = 1; i < n; i++) { O[i] = Math.max(0, E[i] - E[i - 1]) + 0.6 * Math.max(0, Lw[i] - Lw[i - 1]); K[i] = Math.max(0, Lw[i] - Lw[i - 1]); }
+  // 拍长：自相关，偏好常见速度
+  let best = 0, lag = 0;
+  const ac = (L) => { let s = 0; for (let i = L; i < n; i++) s += O[i] * O[i - L]; return s / (n - L); };
+  for (let L = Math.round((fps * 60) / 180); L <= Math.round((fps * 60) / 70); L++) {
+    const s = ac(L) * Math.exp(-0.5 * (Math.log2((fps * 60) / L / 115) / 0.8) ** 2);
+    if (s > best) { best = s; lag = L; }
+  }
+  if (!lag) return null;
+  const y0 = ac(lag - 1), y1 = ac(lag), y2 = ac(lag + 1), den = y0 - 2 * y1 + y2;
+  let T = (lag + (den ? (0.5 * (y0 - y2)) / den : 0)) / fps;
+  // 相位：所有拍点上的起拍能量之和最大
+  const at = (t) => { const i = Math.round(t * fps); return i >= 0 && i < n ? O[i] : 0; };
+  let bestPh = 0, bestS = -1;
+  for (let ph = 0; ph < T; ph += 1 / fps) { let s = 0; for (let t = ph; t < total; t += T) s += at(t) + 0.5 * at(t - 1 / fps) + 0.5 * at(t + 1 / fps); if (s > bestS) { bestS = s; bestPh = ph; } }
+  // 拟合：每个拍点附近 ±T/6 找真实起拍峰，最小二乘拟合 t_k = t0 + k·T
+  const sorted = Array.from(O).sort((x, y) => x - y), thr = sorted[Math.floor(n * 0.75)];
+  const pts = [];
+  for (let k = 0; bestPh + k * T < total; k++) {
+    const c = (bestPh + k * T) * fps, w = Math.max(2, Math.round((T * fps) / 6));
+    let bi = -1, bv = thr;
+    for (let i = Math.max(1, Math.round(c - w)); i <= Math.min(n - 1, Math.round(c + w)); i++) if (O[i] > bv) { bv = O[i]; bi = i; }
+    if (bi >= 0) pts.push([k, bi / fps]);
+  }
+  let t0 = bestPh;
+  if (pts.length >= 8) {
+    const m = pts.length, sx = pts.reduce((q, p) => q + p[0], 0), sy = pts.reduce((q, p) => q + p[1], 0), sxx = pts.reduce((q, p) => q + p[0] * p[0], 0), sxy = pts.reduce((q, p) => q + p[0] * p[1], 0);
+    const slope = (m * sxy - sx * sy) / (m * sxx - sx * sx);
+    if (Math.abs(slope / T - 1) < 0.05) { T = slope; t0 = (sy - slope * sx) / m; }
+  }
+  while (t0 - T >= 0) t0 -= T;
+  const beats = [];
+  for (let t = t0; t < total; t += T) if (t >= 0) beats.push(+t.toFixed(3));
+  const kAt = (t) => { const c = Math.round(t * fps); let v = 0; for (let i = c - 2; i <= c + 2; i++) if (i >= 0 && i < n) v = Math.max(v, K[i]); return v; };
+  let bar = 0, barS = -1;
+  for (let m = 0; m < 4; m++) { let s = 0; for (let k = m; k < beats.length; k += 4) s += kAt(beats[k]); if (s > barS) { barS = s; bar = m; } }
+  const downbeats = beats.filter((_, k) => k % 4 === bar);
+  const hits = beats.map((t) => [t, kAt(t)]).sort((x, y) => y[1] - x[1]).reduce((acc, h) => { if (acc.length < 4 && acc.every((x) => Math.abs(x - h[0]) > 6)) acc.push(h[0]); return acc; }, []).sort((x, y) => x - y);
+  const match = beats.filter((t) => { const c = Math.round(t * fps); for (let i = c - 4; i <= c + 4; i++) if (i > 0 && i < n && O[i] > thr) return true; return false; }).length / Math.max(1, beats.length);
+  return { bpm: +(60 / T).toFixed(2), offset: +t0.toFixed(3), beats, downbeats, hits, match: +match.toFixed(2) };
+}
+

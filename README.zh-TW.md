@@ -46,7 +46,7 @@
 |---|---|---|
 | **Agent Skill**（[`skills/auto-video-workflow/`](skills/auto-video-workflow/)） | **8 步閉環 + 6 個 CLI 腳本** | Claude Code / Codex / Antigravity 通用；復盤數據 → 搜證 → 寫稿 → 配音鎖軸 → 寫畫面自檢 → 混音渲染 → 出封面 → 發布 |
 | **抖音 MCP**（[`mcp/`](mcp/) `douyin-video-mcp`） | **10 個 MCP 工具 + 同構 CLI** | 本機單帳號憑證複用、**近期作品播放與 2s/5s 跳出率復盤**、**單作同級對比與流量來源診斷**、熱榜搜尋、無浮水印下載、自動發布 |
-| **畫面與渲染規格** | **1920×1080 · 60fps · H.264** | 基於 [`motion-lib`](https://github.com/honestTai/motion-lib)（194 種動效 + 23 種轉場 + 6 套主題皮膚），經 `chrome-tall.sh` 視口補償零裁切輸出 |
+| **畫面與渲染規格** | **1920×1080 · 60fps · H.264** | 基於 [`motion-lib`](https://github.com/honestTai/motion-lib)（217 種動效 + 23 種轉場 + 6 套主題皮膚），經 `chrome-tall.sh` 視口補償零裁切輸出 |
 | **音訊與字幕母帶** | **逐字時間戳 · -16 LUFS** | 豆包語音雙向串流 WebSocket 逐字對齊 `timing.js`；人聲 `-16 LUFS` + BGM `-24 LUFS` 動態壓限混音 |
 
 ---
@@ -85,8 +85,8 @@
 2. **雙通道事實搜證**：搜尋抖音高讚與最新作品（`search_videos`）+ 全網一手資料並逐條記錄出處。
 3. **撰寫分鏡與發布資訊**：產出 `script.md` 與 `project.json`（含 ≤20 字標題、標籤、封面三要素）。
 4. **配音先行鎖定時間軸**：`tts.mjs` 合成 `audio/voice.wav` 與逐字對齊 `timing.js`，物理杜絕音畫錯位。
-5. **宣告式動效與截圖自檢**：用 `motion-lib` 撰寫 `index.html`，執行 `snap.mjs` 產出 `snapshots/sheet.jpg` 逐格檢查。
-6. **BGM 自動閃避混音與 60fps 渲染**：`bgm.mjs` + `render.mjs` 輸出 `1920×1080` `60fps` MP4 並以 `ffprobe` 驗收。
+5. **宣告式動效與截圖自檢**：先定片型（有 IP 角色用舞台劇 · 一鏡到底，純資料用世界畫布），逐句挑零件「演」出來，用 `motion-lib` 撰寫 `index.html`，執行 `check.mjs` 與 `snap.mjs`，對照審美準則逐格檢查。
+6. **卡點、音效、BGM 閃避混音與 60fps 渲染**：`bgm.mjs pick` 量出拍子讓換場卡點，`sfx.mjs` 給每個動效配音效，`bgm.mjs mix` + `render.mjs` 輸出 `1920×1080` `60fps` MP4 並以 `ffprobe` 驗收。
 7. **3:4 直式封面海報**：抽取代表格生成並裁切 `1080×1440` 封面，逐字核驗無錯字。
 8. **自動發布回流**：呼叫 `publish_video` 發布至創作者中心，最新播放數據回流至下一步循環。
 
@@ -158,9 +158,10 @@ node $S/init-project.mjs my-video --topic "主題"
 node $S/tts.mjs videos/my-video
 node $S/check.mjs videos/my-video     # 機器自檢：動效名寫錯、字小於 32px、鏡頭到位時空屏……有 ✗ 必須改
 node $S/snap.mjs videos/my-video
+node $S/bgm.mjs list && node $S/bgm.mjs pick videos/my-video --track "曲名"   # 選曲並量出拍子（beats.js），換場自動卡點
 node $S/sfx.mjs videos/my-video       # 音效軌：每個動效按觸發時間自動配一個音效
-node $S/bgm.mjs list && node $S/bgm.mjs mix videos/my-video --track "曲名"
-node $S/render.mjs videos/my-video
+node $S/bgm.mjs mix videos/my-video
+node $S/render.mjs videos/my-video --grain 2   # 膠片顆粒（像素風不加）
 ```
 
 ## 🔒 本機私有配置（`.local/`）

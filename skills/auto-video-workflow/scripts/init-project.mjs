@@ -31,7 +31,7 @@ const motionLib = candidates.find(isMotionLib);
 if (!motionLib) die("没有找到 motion-lib。先 git clone https://github.com/honestTai/motion-lib，再用 --motion-lib <目录> 或环境变量 MOTION_LIB_DIR 指给我。找过的位置：\n  " + candidates.join("\n  "));
 
 fs.mkdirSync(path.join(dir, "lib"), { recursive: true });
-for (const item of ["fx.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-sound.js", "sfx.mjs", "fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx.css", "chrome-tall.sh", "fonts", "vendor", "assets"]) {
+for (const item of ["fx.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-ink.js", "fx-chat.js", "fx-diagram.js", "fx-shape.js", "fx-sound.js", "sfx.mjs", "fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx.css", "chrome-tall.sh", "fonts", "vendor", "assets"]) {
   const src = path.join(motionLib, item);
   if (fs.existsSync(src)) fs.cpSync(src, path.join(dir, "lib", item), { recursive: true, force: true });
 }
@@ -59,6 +59,7 @@ writeNew("project.json", JSON.stringify({
   ],
 }, null, 2) + "\n");
 
+writeNew("beats.js", "// bgm.mjs pick / mix 会重写这个文件：BGM 在成片里的拍点（秒）\nwindow.FX_BEATS = null;\n");
 writeNew("script.md", `# ${opts.topic || slug}
 
 ## 资料与出处
@@ -114,7 +115,8 @@ if (opts.stage || opts.oner) {
 <script src="lib/fx-puppet.js"></script>    <!-- 主持人 -->
 <script src="lib/fx-stage.js"></script>     <!-- 场景、画中画、小演员 -->
 ${oner ? '<script src="lib/fx-oner.js"></script>      <!-- 一镜到底：一栋楼 + 不剪的长镜头（要放在 fx-sound.js 前面） -->\n' : ""}<script src="lib/fx-sound.js"></script>     <!-- 音效层：每个动效自带声音，跑 sfx.mjs 生成音效轨 -->
-<script src="timing.js"></script>${cast ? '\n<script src="assets/ip-cast-rig.js"></script>' : ""}
+<script src="timing.js"></script>
+<script src="beats.js"></script>      <!-- bgm.mjs pick 量出的拍点（卡点用）；没有 BGM 时是空的 -->${cast ? '\n<script src="assets/ip-cast-rig.js"></script>' : ""}
 <style>
   /* 这条片子自己的样式写这里。字号下限 32px；内容放在画面右边 2/3（x ≥ 640），左下角是主持人 */
 </style>
@@ -154,6 +156,7 @@ writeNew("index.html", `<!doctype html>
 <script src="lib/fx-puppet.js"></script>
 <!-- 按需加载：粒子 lib/fx-particles.js；真 3D 依次加 lib/vendor/three-fx.min.js（放在 fx.js 前）和 lib/fx-3d.js -->
 <script src="timing.js"></script>
+<script src="beats.js"></script>      <!-- bgm.mjs pick 量出的拍点（卡点用）；没有 BGM 时是空的 -->
 <style>
   /* 这条片子自己的样式写这里。字号下限 32px；一条片子只用一个强调色（改 --fx-accent） */
   #root { --fx-accent: #f5a524; }
@@ -196,4 +199,4 @@ if (ipCastDir) {
 console.log(`✓ 工程 ${path.relative(process.cwd(), dir) || "."}`);
 console.log(`  motion-lib: ${motionLib} → lib/（fx.js、fx.css、字体、vendor、chrome-tall.sh）`);
 console.log(created.length ? `  新建：${created.join("、")}` : "  已有工程：只更新了 lib/");
-console.log("  接着：写 script.md 和 project.json 的 scenes → tts.mjs → 写 index.html → check.mjs → snap.mjs → sfx.mjs → bgm.mjs mix → render.mjs");
+console.log("  接着：写 script.md 和 project.json 的 scenes → tts.mjs → 写 index.html → check.mjs → snap.mjs → bgm.mjs pick → sfx.mjs → bgm.mjs mix → render.mjs");

@@ -32,7 +32,7 @@ function loadCatalog() {
   new Function("window", fs.readFileSync(path.join(lib, "fx.js"), "utf8"))(win);
   const owner = new Map(), names = () => [...Object.keys(win.FX.fx), ...Object.keys(win.FX.trans).map((k) => "in:" + k), ...Object.keys(win.FX.make).map((k) => "make:" + k)];
   let seen = new Set(names());
-  for (const f of ["fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-sound.js", "cam-smooth.js"]) {
+  for (const f of ["fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-ink.js", "fx-chat.js", "fx-diagram.js", "fx-shape.js", "fx-sound.js", "cam-smooth.js"]) {
     const file = path.join(lib, f);
     if (!fs.existsSync(file)) continue;
     try { new Function("window", "document", fs.readFileSync(file, "utf8"))(win, { createElement: fake, getElementById: () => null, head: { appendChild() {} } }); } catch { /* 需要完整浏览器环境的模块跳过，下面按源码里的注册语句补名字 */ }

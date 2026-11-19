@@ -108,6 +108,8 @@ node SKILL/scripts/tts.mjs <工程>
 
 **写画面是「挑配方、填内容」，不是从空白页开始设计。**
 
+**先读 `references/aesthetic-rules.md`**（节奏、镜头、画面、声音的审美判例，每条都附了真实踩过的坑）；截图自检时逐条对照。
+
 1. **填分镜表。** 在 `<工程>/script.md` 里加一节「分镜表」，每个分镜一行：时长、这句在讲什么、用哪个配方（R01–R11）、主素材、念到哪句触发什么。
    格式和四条检查规则见 `scene-recipes.md` 第 1 节。表没填完不要写代码。
 2. **写 `<工程>/index.html`。** `init-project.mjs` 生成的页面已经是世界画布的骨架（`data-world` + `theme-studio`）：
@@ -139,12 +141,14 @@ node SKILL/scripts/snap.mjs <工程>
 ## 第 5 步：配音效和 BGM，渲染成片
 
 ```bash
-node SKILL/scripts/sfx.mjs <工程>                            # 音效轨：画面上每个动效自动配一个音效
 node SKILL/scripts/bgm.mjs list                              # 看本机曲库
-node SKILL/scripts/bgm.mjs mix <工程> --track "曲名关键词"     # 按内容情绪选一首，和配音、音效轨混在一起
+node SKILL/scripts/bgm.mjs pick <工程> --track "曲名关键词"    # 按内容情绪选一首，同时量出拍子（beats.js）
+node SKILL/scripts/sfx.mjs <工程>                            # 音效轨：画面上每个动效自动配一个音效
+node SKILL/scripts/bgm.mjs mix <工程>                        # 配音 + 音效轨 + BGM 混在一起
 node SKILL/scripts/render.mjs <工程>
 ```
 
+- **卡点不用手算。** `pick` 量出的拍子写在工程的 `beats.js` 里，页面加载它（`<script src="beats.js"></script>`，骨架里已经有）以后，一镜到底的换房间会自动落在拍子上（换章节优先落在重拍上），推进照片铺满的那一刻也会对拍；最多挪 0.4 秒，不会动配音。不想卡点就在根元素写 `data-beats="off"`。
 - **音效不用手写。** `sfx.mjs` 会读出页面里每个动效的触发时间，按对照表配好声音（弹出、落下、划入、换场、特写、角色表情各有各的声音），音色跟着皮肤走。跑完看它打印的统计：每分钟 30–80 个是正常的；报「偏密」就给次要的动效加 `sfx=none`，报「某一段没有音效」就回去看那一段画面是不是也没有动作。**之后只要改过画面的触发时间，就要重跑 `sfx.mjs` 和 `bgm.mjs mix`。**
 
 - 选曲看标签和 BPM：干货快节奏选轻快的，深度解读选沉稳的；优先无人声的曲子。混音会把人声定在 -16 LUFS、垫乐 -24 LUFS，人声出现时自动压低，片尾淡出。
@@ -213,6 +217,7 @@ mcp/.venv/bin/python mcp/douyin_cli.py publish --video <成片> --cover <封面>
 | `references/motion-lib-guide.md` | 写 `index.html` 之前：世界画布、五条铁律、动效速查 |
 | `references/scene-recipes.md` | 写 `index.html` 之前：分镜表怎么填、11 个配方怎么选怎么改 |
 | `references/recipes/index.html` | 写每个分镜时：从这里整段复制配方代码 |
+| `references/aesthetic-rules.md` | 写画面之前读一遍，截图后对照自查：节奏、镜头、画面、声音的审美判例 |
 | `references/stage-play.md` | 舞台剧片型（有主持人 / IP 角色）：骨架、节奏铁律、零件速查、分镜表、素材清单 |
 | `references/recipes-stage/index.html` | 舞台剧片型的可运行样板 |
 | `references/setup.md` | 缺配置、第一次使用、凭证失效时 |

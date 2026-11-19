@@ -46,7 +46,7 @@
 |---|---|---|
 | **Agent Skill**（[`skills/auto-video-workflow/`](skills/auto-video-workflow/)） | **8 步闭环 + 8 个 CLI 脚本** | Claude Code / Codex / Antigravity 通用；复盘数据 → 搜证 → 写稿 → 配音锁轴 → 写画面自检 → 混音渲染 → 出封面 → 发布 |
 | **抖音 MCP**（[`mcp/`](mcp/) `douyin-video-mcp`） | **10 个 MCP 工具 + 同构 CLI** | 本机单账号凭证复用、**近期作品播放与 2s/5s 跳出率复盘**、**单作同级对比与流量来源诊断**、热榜搜索、无水印下载、自动发布 |
-| **画面与渲染规格** | **1920×1080 · 60fps · H.264** | 基于 [`motion-lib`](https://github.com/honestTai/motion-lib)（194 种动效 + 23 种转场 + 6 套主题皮肤），经 `chrome-tall.sh` 视口补偿零裁切输出 |
+| **画面与渲染规格** | **1920×1080 · 60fps · H.264** | 基于 [`motion-lib`](https://github.com/honestTai/motion-lib)（217 种动效 + 23 种转场 + 6 套主题皮肤），经 `chrome-tall.sh` 视口补偿零裁切输出 |
 | **音频与字幕母带** | **逐字时间戳 · -16 LUFS** | 豆包语音双向流式 WebSocket 逐字对齐 `timing.js`；人声 `-16 LUFS` + BGM `-24 LUFS` 动态压限混音 |
 
 <details open>
@@ -106,8 +106,8 @@
 ② 搜集资料 ── 抖音同题材爆款与最新作品（search_videos）+ 全网一手公告/论文/实测出处
 ③ 写口播稿 ── script.md（含数据复盘改进方案 + 事实出处）+ project.json（分镜台词、标题、标签、封面三要素）
 ④ 豆包配音 ── tts.mjs：流式合成 audio/voice.wav + 逐字时间戳对齐字幕 timing.js + 锁定各幕真实秒数
-⑤ 动效画面 ── 填分镜表 → 按 11 个分镜配方写 index.html（世界画布：换内容 = 镜头走过去）→ check.mjs 机器自检 → snap.mjs 截图复核
-⑥ 混音渲染 ── sfx.mjs 给每个动效自动配音效 → bgm.mjs 自动闪避混音 → render.mjs 逐帧渲染 1920×1080 60fps MP4 + ffprobe 质检
+⑤ 动效画面 ── 先定片型（有 IP 角色：舞台剧 · 一镜到底；纯数据：世界画布）→ 填分镜表，逐句挑零件「演」出来（聊天窗、终端、代码 diff、榜单换名次、信息淹没……）→ 写 index.html → check.mjs 机器自检 → snap.mjs 截图对照审美准则复核
+⑥ 混音渲染 ── bgm.mjs pick 选曲并量出拍子（换场自动卡点）→ sfx.mjs 给每个动效自动配音效 → bgm.mjs mix 人声 / 音效 / BGM 闪避混音 → render.mjs 逐帧渲染 1920×1080 60fps MP4（可加胶片颗粒）+ ffprobe 质检
 ⑦ 竖版封面 ── 抽代表帧生成 1080×1440（3:4）醒目海报封面，逐字核验三要素无错字
 ⑧ 自动发布 ── publish_video 上传创作者中心（支持公开 / 仅自己可见 / 定时 / dry-run）→ 播放数据回流第 ① 步 ↺
 ```
@@ -162,17 +162,21 @@ auto-video-workflow/
     │   ├── init-project.mjs      初始化单条视频工程并同步 motion-lib 运行时至 lib/
     │   ├── tts.mjs               分镜配音合成、逐字字幕对齐、回写分镜时长与 timing.js
     │   ├── volc-tts.mjs          火山引擎豆包语音双向流式 WebSocket 客户端（含逐字时间戳）
-    │   ├── bgm.mjs               本机 BGM 曲库管理、BPM 估算与自动压限闪避混音
+    │   ├── bgm.mjs               本机 BGM 曲库管理、选曲量拍子（beats.js，卡点用）与自动压限闪避混音
     │   ├── sfx.mjs               音效轨：按每个动效的触发时间自动配音效（代码合成，音色跟皮肤走）→ audio/sfx.wav
     │   ├── check.mjs             机器自检：动效名写错、字小于 32px、镜头到位时空屏、文字出画、真素材太少……有 ✗ 必须改
     │   ├── shot.mjs              给出处网页截图存进 assets/shots/，当片子里的真素材
     │   ├── snap.mjs              每个分镜截「到位帧 + 后段帧」拼成 sheet.jpg，另出手机尺寸的 phone.jpg
     │   ├── render.mjs            时长一致性核验 + 1080p 60fps 渲染 + 音轨合成 + ffprobe 质检
-    │   └── lib.mjs               配置加载、字幕断句对齐与 Chrome 视口包装器工具库
+    │   └── lib.mjs               配置加载、字幕断句对齐、节拍网格分析与 Chrome 视口包装器工具库
     └── references/
         ├── analytics.md          账号播放数据拉取、2s/5s 跳出率解读与创作纠偏处方
         ├── copywriting.md        口播三段式结构、黄金 5 秒钩子公式、标题/简介/封面三要素规范
-        ├── motion-lib-guide.md   motion-lib 五套皮肤选型、语法速查、音画对齐与安全区规范
+        ├── stage-play.md         舞台剧片型（有 IP 角色时用）：导演铁律、零件速查、一镜到底拍法、讲 AI 的专用零件、分镜表、素材清单
+        ├── aesthetic-rules.md    审美准则（判例式）：节奏、镜头、画面、声音 19 条，每条附真实踩过的坑
+        ├── motion-lib-guide.md   世界画布片型（纯数据 / 截图）：五条铁律、动效速查、角色跟着内容走
+        ├── scene-recipes.md      世界画布的分镜表格式和 11 个分镜配方
+        ├── recipes/ recipes-stage/  两种片型可直接运行、整段复制的样板页
         └── setup.md              首次环境与凭证配置指南
 ```
 
@@ -303,13 +307,14 @@ cd mcp
 ```bash
 S=skills/auto-video-workflow/scripts
 
-node $S/init-project.mjs my-video --topic "主题"          # 1. 创建 videos/my-video/ 并同步 motion-lib 到 lib/
+node $S/init-project.mjs my-video --topic "主题"          # 1. 创建 videos/my-video/ 并同步 motion-lib 到 lib/（配音后加 --oner / --stage 重新生成舞台剧骨架）
 node $S/tts.mjs videos/my-video                           # 2. 豆包配音 + 逐字字幕对齐 + 生成 timing.js
 node $S/check.mjs videos/my-video                         # 3. 机器自检，有 ✗ 就改，直到通过
 node $S/snap.mjs videos/my-video                          #    再截图：snapshots/sheet.jpg（到位帧 + 后段帧）和 phone.jpg（手机尺寸）
-node $S/sfx.mjs videos/my-video                           # 4. 音效轨：每个动效自动配一个音效
-node $S/bgm.mjs list && node $S/bgm.mjs mix videos/my-video --track "曲名"  #    配音 + 音效 + BGM 自动压限闪避混音
-node $S/render.mjs videos/my-video                        # 5. 校验分镜时长 + 渲染 1080p 60fps 成片 + ffprobe 质检
+node $S/bgm.mjs list && node $S/bgm.mjs pick videos/my-video --track "曲名"  # 4. 选曲并量出拍子（beats.js），换场会自动卡在拍子上
+node $S/sfx.mjs videos/my-video                           #    音效轨：每个动效自动配一个音效
+node $S/bgm.mjs mix videos/my-video                       #    配音 + 音效 + BGM 自动压限闪避混音
+node $S/render.mjs videos/my-video --grain 2              # 5. 校验分镜时长 + 渲染 1080p 60fps 成片（--grain 胶片颗粒，像素风不加）+ ffprobe 质检
 ```
 
 每条视频都是 `videos/<slug>/` 下一个完全自包含的独立工程：
@@ -320,8 +325,9 @@ videos/<slug>/
 ├── script.md         账号数据复盘结论、一手资料出处链接、口播定稿全文
 ├── index.html        motion-lib 声明式分镜源码（可在浏览器打开 index.html?play 实时按空格预览）
 ├── timing.js         tts.mjs 自动生成：逐字对齐字幕数组 AVW_TIMING.subtitles 与各分镜精确时长
+├── beats.js          bgm.mjs pick 自动生成：BGM 在成片里的拍点（卡点用）
 ├── lib/              motion-lib 运行时副本（fx.js / fx.css / 字体 / vendor / chrome-tall.sh）
-├── audio/            voice.wav（纯净配音）、mix.wav（-16 LUFS 人声 + -24 LUFS 自动闪避 BGM）
+├── audio/            voice.wav（纯净配音）、sfx.wav（音效轨）、mix.wav（-16 LUFS 人声 + 音效 + -24 LUFS 自动闪避 BGM）
 ├── snapshots/        各分镜高清抽帧与网格总览检视表 sheet.jpg
 ├── renders/          最终导出的 1920×1080 60fps MP4 成片
 └── cover/            参考抽帧与裁剪对齐后的 1080×1440（3:4）发布封面
