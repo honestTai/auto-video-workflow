@@ -1,4 +1,5 @@
-# 本机私有配置：账号、关键词池、个人创作要求
+# 本机私有配置：账号、关键词池、个人创作要求（.local 也可能是指向配置目录的软链接）
+.local
 .local/
 
 # 抖音 MCP：账号数据库（含登录凭证）、下载的视频、环境变量、虚拟环境
@@ -26,3 +27,16 @@ node_modules/
 .idea/
 .vscode/
 *.log
+
+# 配方样板跑起来时同步进去的库副本和截图
+skills/auto-video-workflow/references/recipes*/lib/
+skills/auto-video-workflow/references/recipes*/snapshots/
+skills/auto-video-workflow/references/recipes*/.hyperframes/
+skills/auto-video-workflow/references/recipes*/project.json
+skills/auto-video-workflow/references/recipes*/script.md
+skills/auto-video-workflow/references/recipes*/audio/
+skills/auto-video-workflow/references/recipes*/renders/
+skills/auto-video-workflow/references/recipes*/cover/
+skills/auto-video-workflow/references/recipes*/assets/chars/
+skills/auto-video-workflow/references/recipes*/assets/ip-cast*
+skills/auto-video-workflow/references/recipes*/assets/shots/

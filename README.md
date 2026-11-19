@@ -44,9 +44,9 @@
 
 | 模块 | 数量 / 规格 | 核心职责 |
 |---|---|---|
-| **Agent Skill**（[`skills/auto-video-workflow/`](skills/auto-video-workflow/)） | **8 步闭环 + 6 个 CLI 脚本** | Claude Code / Codex / Antigravity 通用；复盘数据 → 搜证 → 写稿 → 配音锁轴 → 写画面自检 → 混音渲染 → 出封面 → 发布 |
+| **Agent Skill**（[`skills/auto-video-workflow/`](skills/auto-video-workflow/)） | **8 步闭环 + 8 个 CLI 脚本** | Claude Code / Codex / Antigravity 通用；复盘数据 → 搜证 → 写稿 → 配音锁轴 → 写画面自检 → 混音渲染 → 出封面 → 发布 |
 | **抖音 MCP**（[`mcp/`](mcp/) `douyin-video-mcp`） | **10 个 MCP 工具 + 同构 CLI** | 本机单账号凭证复用、**近期作品播放与 2s/5s 跳出率复盘**、**单作同级对比与流量来源诊断**、热榜搜索、无水印下载、自动发布 |
-| **画面与渲染规格** | **1920×1080 · 60fps · H.264** | 基于 [`motion-lib`](https://github.com/honestTai/motion-lib)（153 种动效 + 20 种转场 + 5 套主题皮肤），经 `chrome-tall.sh` 视口补偿零裁切输出 |
+| **画面与渲染规格** | **1920×1080 · 60fps · H.264** | 基于 [`motion-lib`](https://github.com/honestTai/motion-lib)（190 种动效 + 23 种转场 + 6 套主题皮肤），经 `chrome-tall.sh` 视口补偿零裁切输出 |
 | **音频与字幕母带** | **逐字时间戳 · -16 LUFS** | 豆包语音双向流式 WebSocket 逐字对齐 `timing.js`；人声 `-16 LUFS` + BGM `-24 LUFS` 动态压限混音 |
 
 <details open>
@@ -106,7 +106,7 @@
 ② 搜集资料 ── 抖音同题材爆款与最新作品（search_videos）+ 全网一手公告/论文/实测出处
 ③ 写口播稿 ── script.md（含数据复盘改进方案 + 事实出处）+ project.json（分镜台词、标题、标签、封面三要素）
 ④ 豆包配音 ── tts.mjs：流式合成 audio/voice.wav + 逐字时间戳对齐字幕 timing.js + 锁定各幕真实秒数
-⑤ 动效画面 ── Agent 按调性选皮肤，用 motion-lib 写 index.html → snap.mjs 拼图自检排版与安全区
+⑤ 动效画面 ── 填分镜表 → 按 11 个分镜配方写 index.html（世界画布：换内容 = 镜头走过去）→ check.mjs 机器自检 → snap.mjs 截图复核
 ⑥ 混音渲染 ── bgm.mjs 自动闪避混音 → render.mjs 逐帧渲染 1920×1080 60fps MP4 + ffprobe 质检
 ⑦ 竖版封面 ── 抽代表帧生成 1080×1440（3:4）醒目海报封面，逐字核验三要素无错字
 ⑧ 自动发布 ── publish_video 上传创作者中心（支持公开 / 仅自己可见 / 定时 / dry-run）→ 播放数据回流第 ① 步 ↺
@@ -163,7 +163,9 @@ auto-video-workflow/
     │   ├── tts.mjs               分镜配音合成、逐字字幕对齐、回写分镜时长与 timing.js
     │   ├── volc-tts.mjs          火山引擎豆包语音双向流式 WebSocket 客户端（含逐字时间戳）
     │   ├── bgm.mjs               本机 BGM 曲库管理、BPM 估算与自动压限闪避混音
-    │   ├── snap.mjs              逐分镜抽帧并拼装编号自检总览图 snapshots/sheet.jpg
+    │   ├── check.mjs             机器自检：动效名写错、字小于 32px、镜头到位时空屏、文字出画、真素材太少……有 ✗ 必须改
+    │   ├── shot.mjs              给出处网页截图存进 assets/shots/，当片子里的真素材
+    │   ├── snap.mjs              每个分镜截「到位帧 + 后段帧」拼成 sheet.jpg，另出手机尺寸的 phone.jpg
     │   ├── render.mjs            时长一致性核验 + 1080p 60fps 渲染 + 音轨合成 + ffprobe 质检
     │   └── lib.mjs               配置加载、字幕断句对齐与 Chrome 视口包装器工具库
     └── references/
@@ -302,7 +304,8 @@ S=skills/auto-video-workflow/scripts
 
 node $S/init-project.mjs my-video --topic "主题"          # 1. 创建 videos/my-video/ 并同步 motion-lib 到 lib/
 node $S/tts.mjs videos/my-video                           # 2. 豆包配音 + 逐字字幕对齐 + 生成 timing.js
-node $S/snap.mjs videos/my-video                          # 3. 逐幕抽帧拼成总览图 snapshots/sheet.jpg
+node $S/check.mjs videos/my-video                         # 3. 机器自检，有 ✗ 就改，直到通过
+node $S/snap.mjs videos/my-video                          #    再截图：snapshots/sheet.jpg（到位帧 + 后段帧）和 phone.jpg（手机尺寸）
 node $S/bgm.mjs list && node $S/bgm.mjs mix videos/my-video --track "曲名"  # 4. BGM 自动压限闪避混音
 node $S/render.mjs videos/my-video                        # 5. 校验分镜时长 + 渲染 1080p 60fps 成片 + ffprobe 质检
 ```

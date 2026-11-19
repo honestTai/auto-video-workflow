@@ -52,6 +52,10 @@ export function loadProfile() {
   return {};
 }
 
+/** 渲染器的 npm 包名。固定在测试过的版本上：上游刚发新版的那几分钟里 npx 可能装不下来，新版也可能改行为。
+ *  想换版本设环境变量 HYPERFRAMES_VERSION（例如 latest） */
+export const HYPERFRAMES = "hyperframes@" + (process.env.HYPERFRAMES_VERSION || "0.9.69");
+
 /** 本机 Chrome 的可执行文件（渲染和截图用）；找不到返回 undefined */
 export function findChrome() {
   return [

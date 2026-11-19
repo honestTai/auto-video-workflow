@@ -1,6 +1,6 @@
 ---
 name: auto-video-workflow
-description: 给一个主题（或从配置的关键词里自动选题），全自动做出一条 1080p 60fps 的口播讲解视频并发布到抖音：复盘本号播放与5秒跳出数据 → 搜集抖音与全网资料 → 写口播文案和发布信息 → 豆包语音配音并锁定时间轴 → 用 motion-lib 动效库写画面 → 加 BGM 混音渲染成片 → 生成封面 → 通过 douyin-video-mcp 发布。当用户说"做一期关于 ×× 的视频发抖音 / 自动出片 / 全自动做视频 / 从关键词里选题做视频 / 用 motion-lib 做口播视频并发布"时使用。
+description: 给一个主题（或从配置的关键词里自动选题），全自动做出一条 1080p 60fps 的口播讲解视频并发布到抖音：复盘本号播放与5秒跳出数据 → 搜集抖音与全网资料 → 写口播文案和发布信息 → 豆包语音配音并锁定时间轴 → 用 motion-lib 动效库按分镜配方写画面并通过机器自检 → 加 BGM 混音渲染成片 → 生成封面 → 通过 douyin-video-mcp 发布。当用户说"做一期关于 ×× 的视频发抖音 / 自动出片 / 全自动做视频 / 从关键词里选题做视频 / 用 motion-lib 做口播视频并发布"时使用。
 ---
 
 # 全自动出片 + 发布
@@ -17,7 +17,7 @@ description: 给一个主题（或从配置的关键词里自动选题），全�
 - 已绑定的抖音账号和配置里指定的账号名对不上。
 - 用户明确说了「只出片不发布」（做到第 6 步为止）或「dry-run」（第 7 步用 `dry_run=true`，只校验不上传）。
 
-其他问题（某个脚本报错、截图有瑕疵、配音某个词读错）自己修好再继续。
+其他问题（某个脚本报错、`check.mjs` 报 ✗、截图有瑕疵、配音某个词读错）自己修好再继续。
 
 约定：下文的 `SKILL` 指本文件所在目录，`<工程>` 指 `videos/<slug>/`。
 
@@ -39,6 +39,14 @@ description: 给一个主题（或从配置的关键词里自动选题），全�
 
 事实、数字、引用逐条记下出处。**查不到出处的不写，不编数据。**
 
+**素材。** 画面要靠真素材撑起来，不能全是文字卡片。每条要引用的事实，顺手把出处页面截下来（工程建好之后执行，见第 2 步）：
+
+```bash
+node SKILL/scripts/shot.mjs <工程> https://出处网址 --name 起个英文名
+```
+
+截图存到 `<工程>/assets/shots/`，**每张都要打开看一眼**（有没有登录墙、弹窗、空白页）。一条 60–90 秒的片子至少准备 4 张能用的截图。
+
 ## 第 2 步：写口播文案和发布信息
 
 先读 `references/copywriting.md`。
@@ -57,7 +65,7 @@ node SKILL/scripts/init-project.mjs <slug> --topic "主题"     # slug 用英文
 {
   "slug": "mcp-overload",
   "topic": "别再给 AI 瞎装 MCP",
-  "theme": "theme-pixel",
+  "theme": "theme-studio",
   "voices": { "host": "音色 id", "guest": "另一个音色 id" },
   "publish": {
     "title": "别再给你的 AI 瞎装 MCP 了",
@@ -90,23 +98,42 @@ node SKILL/scripts/tts.mjs <工程>
 
 某个词读得不对：给那个分镜加 `"tts": "按想要的读法写的整句"`（`say` 仍用于字幕），重跑即可，没改的分镜会复用缓存。
 
-## 第 4 步：定风格，写画面，截图自检
+## 第 4 步：填分镜表，写画面，自检
 
-先读 `references/motion-lib-guide.md`；用到不熟的动效去 motion-lib 的 `README.md`「动效目录」查，不要编动效名。
+**先定片型**（一条片子只用一种）：
 
-1. **自己定皮肤和模块**（不问用户）：AI 工具/评测 → `theme-violet` 或 `theme-pixel`；深度观点/商业硬核 → `theme-gold`；清单科普/轻松故事 → `theme-paper`；宇宙/算力/宏大叙事 → `theme-space`。再决定要不要粒子、3D 场景、角色主持人。把选的皮肤写进 `project.json` 的 `theme`。
-2. **写 `<工程>/index.html`**：
-   - 一个分镜一个 `<section class="scene" data-scene="S01" data-d="…">`，顺序和 `scenes` 一一对应，`data-d` 用第 3 步打印的真实秒数；字幕用 `FX.subtitles(AVW_TIMING.subtitles, { style })`。
-   - **一镜到底顺滑镜头切换（`lib/cam-smooth.js`）**：优先在 `#root` 挂 `.cam-canvas-root` 作为全片连续点阵黑板底，讲解分镜用 `class="scene canvas-clear"` 搭配 `data-in="cam-pan(dir=left|right|up|down)"` 做无尽画布无缝摇镜、章节大转折用 `cam-push`、剧场与黑板互切用 `cam-cut`，并在对比镜头里用 `cam-focus` 做单镜内左→右平滑推摇；**避免高频堆砌 `shatter`、`halftone`、`blinds`、`crt-off` 等会遮挡画面与进度条的 PPT 式硬切遮罩**。
-   - **镜头形式有节奏切换**：有角色出镜时，交替编排「角色放大同台对手戏互动」「具体痛点/情境小剧场演绎」与「角色退场的全屏高清 B-roll 讲解」，切忌全程把小立绘钉死在底部角落配多卡片 PPT；角色口型直接用 `AVW_TIMING.mouth` 真实波形驱动，停顿必闭嘴。
-   - **手机竖屏小屏清晰度硬底线**：`1920×1080` 在竖屏刷到时会被缩小约 5 倍——坚持一屏一重点（单屏 ≤ 15 字，多了就拆分镜），主词 ≥ 72px、模块标题 ≥ 46px、正文标签 ≥ 36px，严禁 `< 32px` 小字段落，优先高对比深底实心色块。
-3. **截图自检**：
+- **舞台剧**：账号有固定主持人 / IP 角色时用（`strategy.md` 会写明）。主持人半身常驻前景，背景是一个个场景，信息用画中画给。**读 `references/stage-play.md`，按它的骨架、分镜表和素材清单做**，样板在 `references/recipes-stage/index.html`。下面第 1、2 小步换成它里面对应的做法，第 3、4 小步（自检、截图）不变。
+- **世界画布**：没有角色、以截图和数据为主时用。读 `references/motion-lib-guide.md` 和 `references/scene-recipes.md`，按下面的步骤做。
+
+**写画面是「挑配方、填内容」，不是从空白页开始设计。**
+
+1. **填分镜表。** 在 `<工程>/script.md` 里加一节「分镜表」，每个分镜一行：时长、这句在讲什么、用哪个配方（R01–R11）、主素材、念到哪句触发什么。
+   格式和四条检查规则见 `scene-recipes.md` 第 1 节。表没填完不要写代码。
+2. **写 `<工程>/index.html`。** `init-project.mjs` 生成的页面已经是世界画布的骨架（`data-world` + `theme-studio`）：
+   - 一个分镜一个 `<section class="scene" data-scene="S01" data-d="…">`，顺序和 `scenes` 一一对应，`data-d` 用第 3 步打印的真实秒数。
+   - 每个分镜的内容从 `references/recipes/index.html` 里**整段复制对应的配方**，再按 `scene-recipes.md` 第 3 节改文字、图片和时间。
+   - **不写 `data-in`**：换分镜默认就是镜头走过去。第 1 个分镜加 `cam-wide@0 cam-home@0.9`，最后 1 个分镜加 `cam-wide@-2.4`。
+   - 常驻层里的进度线：`data-n` 改成章节数，每章第一个分镜的开始秒数写一个 `segment@秒数(i=第几章)`；常驻层的 `data-d` 改成全片秒数。
+   - 账号有固定主持人 / IP 角色时（`strategy.md` 里会写）：角色会自己眨眼、呼吸、对口型；你要做的是让它**跟着内容走**——讲到哪个元素，就在那个元素上写 `call@秒数(who=角色名)`，不要让角色全程待在同一个地方（见 `motion-lib-guide.md` 2.5 节）。
+3. **机器自检，必须通过。**
+
+```bash
+node SKILL/scripts/check.mjs <工程>
+```
+
+   它会查：动效名写错、用了动效却没加载它所在的模块、触发时间超出分镜、**连续几秒画面没有变化**、字小于 32px、镜头到位时空屏、画面太空、文字出画或重叠、真素材太少、时长和配音对不上。
+   **有「✗」就按提示改，改完重跑，直到没有 ✗。**「!」是建议，能改就改。不要跳过这一步直接截图或渲染。
+4. **截图，用眼睛看。**
 
 ```bash
 node SKILL/scripts/snap.mjs <工程>
 ```
 
-**必须打开 `<工程>/snapshots/sheet.jpg` 亲眼看**，逐帧检查：在不放大缩略图的情况下每一帧主文字都能一眼看清、没有溢出或重叠、元素都已入场、底部字幕没有压住主内容、角色嘴型干净无残影、没有空白或黑屏帧。有问题就删字放大改 `index.html` 重截，直到每一帧都干净。
+   **必须打开这两张图：**
+   - `<工程>/snapshots/sheet.jpg`：每个分镜两帧，左边是镜头刚到位时、右边是后段。左边不能是空的或只有一行标题；右边文字没有溢出重叠、字幕没有压住主内容。
+   - `<工程>/snapshots/phone.jpg`：每一格就是手机上看到的大小。**不放大的情况下，每一格的主文字都要能一眼读出来**，读不出来就删字、放大。
+
+   有问题就改 `index.html`，从第 3 小步重新来，直到两张图都干净。
 
 ## 第 5 步：配 BGM，渲染成片
 
@@ -165,7 +192,8 @@ mcp/.venv/bin/python mcp/douyin_cli.py publish --video <成片> --cover <封面>
 一次说清楚：
 
 - 选题和一句话结论，用到的主要出处
-- 选的皮肤和 BGM
+- 用了哪些配方、几张真素材，BGM 是哪首
+- `check.mjs` 最后一次的结果（还剩哪些「!」没改、为什么）
 - 成片路径（时长、分辨率）和封面路径
 - 发布的标题、简介、标签
 - 发布到的账号和作品链接（dry-run 或只出片时说明没有发布）
@@ -177,5 +205,9 @@ mcp/.venv/bin/python mcp/douyin_cli.py publish --video <成片> --cover <封面>
 |---|---|
 | `references/analytics.md` | 出片前拉取本号播放数据、分析 2s/5s 跳出率与完播短板时 |
 | `references/copywriting.md` | 写文案、标题、简介、标签、封面文字之前 |
-| `references/motion-lib-guide.md` | 写 `index.html` 之前 |
+| `references/motion-lib-guide.md` | 写 `index.html` 之前：世界画布、五条铁律、动效速查 |
+| `references/scene-recipes.md` | 写 `index.html` 之前：分镜表怎么填、11 个配方怎么选怎么改 |
+| `references/recipes/index.html` | 写每个分镜时：从这里整段复制配方代码 |
+| `references/stage-play.md` | 舞台剧片型（有主持人 / IP 角色）：骨架、节奏铁律、零件速查、分镜表、素材清单 |
+| `references/recipes-stage/index.html` | 舞台剧片型的可运行样板 |
 | `references/setup.md` | 缺配置、第一次使用、凭证失效时 |

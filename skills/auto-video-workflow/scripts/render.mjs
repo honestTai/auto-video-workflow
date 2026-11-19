@@ -5,7 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync, execFileSync } from "node:child_process";
-import { parseArgs, die, readProject, writeProject, hyperframesEnv } from "./lib.mjs";
+import { parseArgs, die, readProject, writeProject, hyperframesEnv, HYPERFRAMES } from "./lib.mjs";
 
 const { opts, rest } = parseArgs(process.argv.slice(2), ["name", "quality", "fps"]);
 const dir = path.resolve(rest[0] || ".");
@@ -31,7 +31,7 @@ fs.mkdirSync(path.join(dir, "renders"), { recursive: true });
 const silent = path.join("renders", `.${name}.silent.mp4`), file = path.join(dir, "renders", `${name}.mp4`);
 const t0 = Date.now();
 // 快速截帧模式在这类页面上自检不通过，会白跑一遍再回退；直接关掉
-const r = spawnSync("npx", ["--yes", "hyperframes", "render", "-o", silent, "-q", quality, "--fps", fps, "--experimental-fast-capture=false"], { cwd: dir, env: hyperframesEnv(dir), shell: process.platform === "win32", stdio: ["ignore", "pipe", "pipe"] });
+const r = spawnSync("npx", ["--yes", HYPERFRAMES, "render", "-o", silent, "-q", quality, "--fps", fps, "--experimental-fast-capture=false"], { cwd: dir, env: hyperframesEnv(dir), shell: process.platform === "win32", stdio: ["ignore", "pipe", "pipe"] });
 let log = String(r.stdout) + String(r.stderr);
 const fail = (msg) => { fs.writeFileSync(path.join(dir, "render.log"), log); die(`${msg}，日志见 ${path.join(dir, "render.log")}`); };
 if (r.status !== 0 || !fs.existsSync(path.join(dir, silent))) fail(`渲染失败（exit ${r.status}）`);

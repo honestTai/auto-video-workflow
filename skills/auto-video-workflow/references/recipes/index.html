@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<title>分镜配方 · 可运行的样板</title>
+<!--
+  这是一份「照抄用」的样板：每个 <section> 是一种常见分镜的标准写法（配方 R01–R11）。
+  做新片子时：挑合适的配方 → 整段复制 → 换文字、换图、把 @秒数 改成口播念到那句话的时间。
+  自己跑起来看：node scripts/init-project.mjs references/recipes   然后浏览器打开 references/recipes/index.html?play
+-->
+<link rel="stylesheet" href="lib/fx.css" />
+<script src="lib/vendor/gsap.min.js"></script>
+<script src="lib/fx.js"></script>
+<script src="lib/fx-world.js"></script>
+<style>
+  #root { --fx-accent: #f5a524; }
+</style>
+</head>
+<body>
+<div id="root" class="theme-studio" data-composition-id="main" data-width="1920" data-height="1080" data-fps="60"
+     data-world="snake" data-cols="4" data-wall="RECIPES">
+
+  <!-- ═══ R01 钩子：一个超大的数字或结论 ═══
+       用在：全片第 1 个分镜（前 3 秒），或每章的核心结论。
+       规则：全屏只有 1 个数字 + 1 行说明。数字从 @0 就在，不要等。
+       cam-wide@0 + cam-home：全片从「整块画布的总览」开始，再推进第一个机位（只在第 1 个分镜用）。 -->
+  <section class="scene center" data-scene="S01" data-d="5.0" data-fx="cam-wide@0 cam-home@0.9(dur=1.1)">
+    <div class="fx-big"><em data-fx="count@1.6(from=1)">20</em><small>倍</small></div>
+    <div class="t-h2" style="margin-top:20px">同一道题，账单差了这么多</div>
+    <div class="t-body muted" style="margin-top:18px" data-fx="wake@3.2">一句补充说明，念到时点亮</div>
+  </section>
+
+  <!-- ═══ R02 章节卡：大数字 + 章节名 ═══
+       用在：每个大章节的开头（全片 3–5 次）。时长 1.5–2.5 秒，口播念章节名即可。 -->
+  <section class="scene center" data-scene="S02" data-d="2.4">
+    <div data-make="bignum" data-no="01" data-tag="第 1 部分" data-title="先看价格" data-en="PRICING" data-fx="bignum@0"></div>
+  </section>
+
+  <!-- ═══ R03 截图讲解：一张大图 + 镜头推到重点 ═══
+       用在：讲官网、公告、榜单、文档、实测截图。这是最该多用的配方。
+       规则：图占画面 55% 以上，从 @0 就在。念到重点时 cam-look 推过去 + box 圈出来，讲完 cam-home 拉回。
+       #s3-key 是一个透明的定位块，盖在截图里要讲的那个区域上（left/top/width/height 自己量）。 -->
+  <section class="scene" data-scene="S03" data-d="6.4">
+    <div class="fx-head"><i>官方定价页</i><h2>输出价格直接<em>砍半</em></h2></div>
+    <div class="abs shot" style="left:96px;top:330px;width:1100px;height:540px"><img src="assets/demo-violet.jpg" alt=""></div>
+    <div class="abs" id="s3-key" style="left:640px;top:420px;width:420px;height:300px" data-fx="box@2.2(w=6,r=16) cam-look@2.2 cam-home@4.8"></div>
+    <div class="abs fx-tile" style="left:1260px;top:420px;width:560px" data-fx="wake@1.0">
+      <h3>看右边这个圈</h3><p>旁边只放一句话，不要抄截图里的字</p>
+    </div>
+  </section>
+
+  <!-- ═══ R04 左右对比：A vs B ═══
+       用在：两个方案、两个模型、前后对比。
+       规则：两张卡从 @0 就摆好（暗着），念到谁 wake 谁。最后赢的那张 zoom-here 原位放大。 -->
+  <section class="scene" data-scene="S04" data-d="6.8">
+    <div class="fx-head"><i>同一道题</i><h2>谁更<em>省钱</em>？</h2></div>
+    <div class="abs row" style="left:200px;top:340px;gap:80px">
+      <div class="fx-tile" style="width:720px" data-fx="wake@0.8 zoom-here@4.6(s=1.5,hold=1.6)"><h3>方案 A</h3><b class="n" data-fx="count@0.9(from=0)">$3</b><p>一次任务的账单</p></div>
+      <div class="fx-tile bad" style="width:720px" data-fx="wake@2.6"><h3>方案 B</h3><b class="n" data-fx="count@2.7(from=0)">$60</b><p>同一道题</p></div>
+    </div>
+  </section>
+
+  <!-- ═══ R05 柱状图：一组数字比大小 ═══
+       用在：榜单分数、价格、速度、数量。
+       规则：图表占画面一半以上；旁边放 1 个大数字当结论。data-hi 是要高亮的那根（从 1 数）。 -->
+  <section class="scene" data-scene="S05" data-d="6.0">
+    <div class="fx-head"><i>每周产出</i><h2>第 6 周开始<em>起飞</em></h2></div>
+    <div class="abs" style="left:120px;top:360px;width:1080px;height:500px"
+         data-make="bars" data-values="3,5,8,14,26,40" data-labels="1周,2周,3周,4周,5周,6周" data-hi="6"
+         data-fx="each:grow-y@0.3(stagger=0.08)"></div>
+    <div class="abs fx-big" style="left:1290px;top:380px;color:var(--fx-accent)" data-fx="count@1.2(from=3) pulse@3.6">40</div>
+    <div class="abs t-h2" style="left:1300px;top:740px">条 / 周</div>
+  </section>
+
+  <!-- ═══ R06 清单：三条并列的要点 ═══
+       用在：三个原因、三条建议、三个步骤（不超过 4 条，多了拆成两个分镜）。
+       规则：三行从 @0 就摆好（暗着），念到哪条 wake 哪条。每行不超过 12 个字。 -->
+  <section class="scene" data-scene="S06" data-d="6.6">
+    <div class="fx-head"><i>记住三条</i><h2>选模型的<em>铁律</em></h2></div>
+    <div class="abs col" style="left:160px;top:360px;width:1600px;gap:26px">
+      <div class="fx-tile" data-fx="wake@0.6"><h3>① 先看单次任务的总账单</h3></div>
+      <div class="fx-tile" data-fx="wake@2.6"><h3>② 难题用旗舰，杂活用便宜的</h3></div>
+      <div class="fx-tile" data-fx="wake@4.6"><h3>③ 拿自己的真实任务测一遍</h3></div>
+    </div>
+  </section>
+
+  <!-- ═══ R07 一组图里挑着讲：扇形 + 放大让位 ═══
+       用在：几款产品、几个案例、几张作品，挨个点评。
+       规则：3–6 张图，每张一定要写死宽高。念到第几张就 pick 第几张；bg-tint 让背景跟着换成那张图的主色（可选）。 -->
+  <section class="scene" data-scene="S07" data-d="7.0">
+    <div class="fx-head" data-fx="bg-tint@1.0(color=#2a2150) bg-tint@3.0(color=#4a3812) bg-tint@5.0(color=#14382f) bg-tint@6.5(color=reset)"><i>四个案例</i><h2>挨个看</h2></div>
+    <div class="abs" style="left:160px;top:330px;width:1600px;height:540px" data-make="fan" data-step="330"
+         data-fx="pick@1.0(i=1) pick@3.0(i=2) pick@5.0(i=3) pick@6.5(i=0)">
+      <div class="shot" style="width:560px;height:315px"><img src="assets/demo-violet.jpg" alt=""></div>
+      <div class="shot" style="width:560px;height:315px"><img src="assets/demo-gold.jpg" alt=""></div>
+      <div class="shot" style="width:560px;height:315px"><img src="assets/demo-paper.jpg" alt=""></div>
+      <div class="shot" style="width:560px;height:315px"><img src="assets/demo-space.jpg" alt=""></div>
+    </div>
+  </section>
+
+  <!-- ═══ R08 一长串同类图快速过：切片换图 ═══
+       用在：「我试了十几个」「这一年发了这么多版本」这种要快速扫过一批图的句子。
+       规则：容器写死宽高；alt 会变成左下角的编号标签；每 0.9–1.2 秒换一张。 -->
+  <section class="scene" data-scene="S08" data-d="5.6">
+    <div class="fx-head"><i>一口气过一遍</i><h2>每个风格<em>一秒</em></h2></div>
+    <div class="abs" style="left:420px;top:320px;width:1080px;height:560px" data-make="slices" data-n="5" data-fx="slice-to@1.2 slice-to@2.4 slice-to@3.6">
+      <img src="assets/demo-violet.jpg" alt="白紫科技"><img src="assets/demo-gold.jpg" alt="黑金电影"><img src="assets/demo-paper.jpg" alt="剪纸拼贴"><img src="assets/demo-space.jpg" alt="深空粒子">
+    </div>
+  </section>
+
+  <!-- ═══ R09 流程 / 时间线：走进画面 ═══
+       用在：讲步骤、讲流程、讲时间线（3–5 步）。念到第几步 walk 到第几步。每个路牌不超过 6 个字。 -->
+  <section class="scene" data-scene="S09" data-d="6.6">
+    <div class="fx-head"><i>四步出片</i><h2>顺着走一遍</h2></div>
+    <div class="abs" style="left:160px;top:300px;width:1600px;height:580px" data-make="road"
+         data-fx="road-walk@0.4(i=1) road-walk@1.9(i=2) road-walk@3.4(i=3) road-walk@4.9(i=4)">
+      <div>① 写稿</div><div>② 配音</div><div>③ 画面</div><div>④ 发布</div>
+    </div>
+  </section>
+
+  <!-- ═══ R10 新内容压上来：背景虚化 ═══
+       用在：讲着一张图 / 一组卡片，突然要插一句结论、一个反转、一个提问。
+       规则：旧内容包在一个 .layer 里，新内容出现的同一秒给它 push-back；新卡片只写一句话。 -->
+  <section class="scene" data-scene="S10" data-d="5.6">
+    <div class="layer" data-fx="push-back@2.6">
+      <div class="fx-head"><i>实测截图</i><h2>看起来一切正常</h2></div>
+      <div class="abs shot" style="left:300px;top:330px;width:1320px;height:540px"><img src="assets/demo-space.jpg" alt=""></div>
+    </div>
+    <div class="abs fx-tile win center" style="left:460px;top:400px;width:1000px;height:280px" data-fx="scale-in@2.6">
+      <h3 style="font-size:84px">但是，等一下</h3><p>这里写反转的那一句</p>
+    </div>
+  </section>
+
+  <!-- ═══ R11 收尾：结论 + 镜头拉远回看全片 ═══
+       用在：最后一个分镜。结论从 @0 就在；倒数 2 秒 cam-wide 拉远，观众看到整块画布 = 全片回顾。 -->
+  <section class="scene center" data-scene="S11" data-d="6.0" data-fx="cam-wide@3.6(dur=1.4)">
+    <div class="t-title">便宜的干杂活，<span class="accent">贵的啃硬骨头</span></div>
+    <div class="t-body muted" style="margin-top:26px" data-fx="wake@1.8">你现在主力用哪个？评论区聊聊</div>
+  </section>
+
+  <!-- ═══ 常驻层：进度线 ═══  data-n = 章节数；segment 的时间是全片的绝对秒数（对应每章第一个分镜的开始时间） -->
+  <section class="scene overlay" data-t="0" data-d="64">
+    <div class="abs" style="left:96px;right:96px;top:44px" data-make="segments" data-n="4"
+         data-fx="segment@0(i=1) segment@13.8(i=2) segment@33.2(i=3) segment@52.4(i=4)"></div>
+  </section>
+
+</div>
+<script>
+  // 真实工程里字幕来自 timing.js：FX.subtitles(AVW_TIMING.subtitles, { style: 'studio' })。这里手写几句只为演示。
+  var say = ['便宜{二十倍}，到底差在哪？', '第一部分，{先看价格}', '官方定价页，输出价直接{砍半}', '同一道题，一个{三块}，一个{六十}', '到第六周，{一周四十条}', '选模型，记住{这三条}',
+             '四个案例，{挨个看}', '每个风格，{一秒}带过', '四步出片，{顺着走一遍}', '看起来正常，{但是等一下}', '便宜的干杂活，{贵的啃硬骨头}'];
+  var t = 0, cues = [];
+  document.querySelectorAll('#root .scene:not(.overlay)').forEach(function (s, i) { var d = +s.getAttribute('data-d'); cues.push([t + 0.3, t + d - 0.2, say[i]]); t += d; });
+  FX.subtitles(cues, { style: 'studio' });
+  FX.build();
+</script>
+</body>
+</html>

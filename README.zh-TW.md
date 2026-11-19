@@ -46,7 +46,7 @@
 |---|---|---|
 | **Agent Skill**（[`skills/auto-video-workflow/`](skills/auto-video-workflow/)） | **8 步閉環 + 6 個 CLI 腳本** | Claude Code / Codex / Antigravity 通用；復盤數據 → 搜證 → 寫稿 → 配音鎖軸 → 寫畫面自檢 → 混音渲染 → 出封面 → 發布 |
 | **抖音 MCP**（[`mcp/`](mcp/) `douyin-video-mcp`） | **10 個 MCP 工具 + 同構 CLI** | 本機單帳號憑證複用、**近期作品播放與 2s/5s 跳出率復盤**、**單作同級對比與流量來源診斷**、熱榜搜尋、無浮水印下載、自動發布 |
-| **畫面與渲染規格** | **1920×1080 · 60fps · H.264** | 基於 [`motion-lib`](https://github.com/honestTai/motion-lib)（153 種動效 + 20 種轉場 + 5 套主題皮膚），經 `chrome-tall.sh` 視口補償零裁切輸出 |
+| **畫面與渲染規格** | **1920×1080 · 60fps · H.264** | 基於 [`motion-lib`](https://github.com/honestTai/motion-lib)（190 種動效 + 23 種轉場 + 6 套主題皮膚），經 `chrome-tall.sh` 視口補償零裁切輸出 |
 | **音訊與字幕母帶** | **逐字時間戳 · -16 LUFS** | 豆包語音雙向串流 WebSocket 逐字對齊 `timing.js`；人聲 `-16 LUFS` + BGM `-24 LUFS` 動態壓限混音 |
 
 ---
@@ -156,6 +156,7 @@ ln -s "$PWD/skills/auto-video-workflow" ~/.claude/skills/auto-video-workflow
 S=skills/auto-video-workflow/scripts
 node $S/init-project.mjs my-video --topic "主題"
 node $S/tts.mjs videos/my-video
+node $S/check.mjs videos/my-video     # 機器自檢：動效名寫錯、字小於 32px、鏡頭到位時空屏……有 ✗ 必須改
 node $S/snap.mjs videos/my-video
 node $S/bgm.mjs list && node $S/bgm.mjs mix videos/my-video --track "曲名"
 node $S/render.mjs videos/my-video
