@@ -31,6 +31,8 @@ if (!motionLib) die("没有找到 motion-lib。先 git clone https://github.com/
 fs.mkdirSync(dir, { recursive: true });
 const sync = spawnSync("bash", [path.join(motionLib, "new-project.sh"), dir], { stdio: ["ignore", "pipe", "pipe"] });
 if (sync.status !== 0) die("同步 motion-lib 失败：" + String(sync.stderr).trim().split("\n").slice(-3).join(" "));
+const camSmoothSrc = path.join(path.dirname(new URL(import.meta.url).pathname), "cam-smooth.js");
+if (fs.existsSync(camSmoothSrc)) fs.copyFileSync(camSmoothSrc, path.join(dir, "lib", "cam-smooth.js"));
 
 const created = [];
 const writeNew = (name, content) => { const f = path.join(dir, name); if (!fs.existsSync(f)) { fs.writeFileSync(f, content); created.push(name); } };
@@ -74,14 +76,15 @@ writeNew("index.html", `<!doctype html>
 <link rel="stylesheet" href="lib/fx.css" />
 <script src="lib/vendor/gsap.min.js"></script>
 <script src="lib/fx.js"></script>
+<script src="lib/cam-smooth.js"></script>
 <!-- 按需加载：粒子 lib/fx-particles.js；真 3D 依次加 lib/vendor/three-fx.min.js（放在 fx.js 前）和 lib/fx-3d.js -->
 <script src="timing.js"></script>
 </head>
 <body>
-<div id="root" class="theme-violet" data-composition-id="main" data-width="1920" data-height="1080" data-fps="60">
+<div id="root" class="theme-violet cam-canvas-root" data-composition-id="main" data-width="1920" data-height="1080" data-fps="60">
 
-  <!-- 一个分镜一个 section，顺序和 project.json 的 scenes 一一对应；data-d 填 tts.mjs 打印的真实秒数 -->
-  <section class="scene dark center" data-scene="S01" data-d="4">
+  <!-- 一个分镜一个 section，顺序和 project.json 的 scenes 一一对应；data-d 填 tts.mjs 打印的真实秒数；同画布切镜优先用 data-in="cam-pan(dir=left)" -->
+  <section class="scene canvas-clear center" data-scene="S01" data-d="4">
     <h1 class="t-title" data-fx="mask-rise@0.2">这里写<span class="accent">大标题</span></h1>
     <p class="t-body" data-fx="rise-in@0.7">这里写一句话副标题</p>
   </section>

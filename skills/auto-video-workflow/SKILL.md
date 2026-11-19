@@ -97,6 +97,7 @@ node SKILL/scripts/tts.mjs <工程>
 1. **自己定皮肤和模块**（不问用户）：AI 工具/评测 → `theme-violet` 或 `theme-pixel`；深度观点/商业硬核 → `theme-gold`；清单科普/轻松故事 → `theme-paper`；宇宙/算力/宏大叙事 → `theme-space`。再决定要不要粒子、3D 场景、角色主持人。把选的皮肤写进 `project.json` 的 `theme`。
 2. **写 `<工程>/index.html`**：
    - 一个分镜一个 `<section class="scene" data-scene="S01" data-d="…">`，顺序和 `scenes` 一一对应，`data-d` 用第 3 步打印的真实秒数；字幕用 `FX.subtitles(AVW_TIMING.subtitles, { style })`。
+   - **一镜到底顺滑镜头切换（`lib/cam-smooth.js`）**：优先在 `#root` 挂 `.cam-canvas-root` 作为全片连续点阵黑板底，讲解分镜用 `class="scene canvas-clear"` 搭配 `data-in="cam-pan(dir=left|right|up|down)"` 做无尽画布无缝摇镜、章节大转折用 `cam-push`、剧场与黑板互切用 `cam-cut`，并在对比镜头里用 `cam-focus` 做单镜内左→右平滑推摇；**避免高频堆砌 `shatter`、`halftone`、`blinds`、`crt-off` 等会遮挡画面与进度条的 PPT 式硬切遮罩**。
    - **镜头形式有节奏切换**：有角色出镜时，交替编排「角色放大同台对手戏互动」「具体痛点/情境小剧场演绎」与「角色退场的全屏高清 B-roll 讲解」，切忌全程把小立绘钉死在底部角落配多卡片 PPT；角色口型直接用 `AVW_TIMING.mouth` 真实波形驱动，停顿必闭嘴。
    - **手机竖屏小屏清晰度硬底线**：`1920×1080` 在竖屏刷到时会被缩小约 5 倍——坚持一屏一重点（单屏 ≤ 15 字，多了就拆分镜），主词 ≥ 72px、模块标题 ≥ 46px、正文标签 ≥ 36px，严禁 `< 32px` 小字段落，优先高对比深底实心色块。
 3. **截图自检**：

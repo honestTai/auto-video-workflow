@@ -28,6 +28,7 @@
 <link rel="stylesheet" href="lib/fx.css" />
 <script src="lib/vendor/gsap.min.js"></script>
 <script src="lib/fx.js"></script>
+<script src="lib/cam-smooth.js"></script>         <!-- 顺滑无限画布摇镜与单镜聚焦镜头 -->
 <script src="timing.js"></script>              <!-- tts.mjs 生成：字幕数组 + 分镜时间 -->
 ...
 <div id="root" class="theme-violet" data-composition-id="main" data-width="1920" data-height="1080" data-fps="60">
@@ -97,9 +98,9 @@
 | 图表生长 | `grow-y`（柱）`grow-x`（条）`draw`（线）`ring` `count`（数字滚动）`fill` |
 | 念到时强调 | `pulse` `marker` `underline` `box` `glow` `shake` `spotlight` `callout` |
 | 关系 / 流程 | `circuit`（两元素间的电路连线）`step` `chapter` `check` `toggle` |
-| 镜头 | `push` `pan` `zoom-to` `zoom-reset` `cam-shake` `drift` `parallax` |
+| 镜头 | `cam-focus` `cam-breathe` `push` `pan` `zoom-to` `zoom-reset` `cam-shake` `drift` `parallax` |
 | 退场 | `fade-out` `rise-out` `blur-out` `scale-out` `scatter-out` |
-| 转场（写在 `data-in`） | `blur-cross` `fade` `push` `wipe` `iris` `zoom-through` `flash` `shatter` `diagonal-split` `blinds` `crt-off` `portal-spin` `halftone` `glitch-cut` |
+| 转场（写在 `data-in`） | **首选顺滑系列**：`cam-pan`（无限画布无缝摇镜，接镜主元素直接 `@0` 常驻随镜头滑入、次要强调元素再按口播延时弹出，做到 0 空屏衔接）`cam-push`（柔和纵深推镜）`cam-cut`（8 帧动作微溶）`blur-cross`；慎用 `shatter` `halftone` `blinds` `crt-off` 等全屏遮罩转场，避免割裂空间或遮挡顶部进度条 |
 
 组件生成器（`data-make`）：`bars` `line` `ring` `wave` `steps` `chapters` `switches` `pixels` `wall` `dust`
 `circle-text` `retro-grid` `papercut` `hills` `torn` `space`（2D 粒子画布）`stage3d`（3D 舞台）。
