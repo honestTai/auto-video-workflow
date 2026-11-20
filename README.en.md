@@ -104,7 +104,7 @@ Most automated video pipelines fail in three places: **publishing blindly withou
 4. **Voice-First Timeline Lock**: `tts.mjs` generates `audio/voice.wav` + word-aligned `timing.js` and writes exact scene durations back to `project.json`.
 5. **Declarative Scene Authoring & Visual QA**: Picks the film type (a one-take stage play when the account has recurring characters, a world canvas for data-only videos), acts each line out with a ready-made part (chat window, terminal, code diff, ranking swap, overload…), authors `index.html` with `motion-lib`, then runs `check.mjs` and inspects `snapshots/sheet.jpg` against the aesthetic rules.
 6. **Beat Sync, Sound Design, BGM Ducking & 60fps Rendering**: `bgm.mjs pick` measures the music's beat grid so camera moves land on beats, `sfx.mjs` synthesises a sound for every effect, and `bgm.mjs mix` mixes `-16 LUFS` vocals and the effects track over `-24 LUFS` ducked BGM; `render.mjs` outputs `1920×1080` `60fps` MP4 and validates via `ffprobe`.
-7. **3:4 Vertical Cover**: Extracts reference frames, generates and crops a `1080×1440` cover (`cover-3x4.png`), and verifies every character on the poster.
+7. **3:4 Vertical Cover & Delivery**: Extracts reference frames, generates and crops a `1080×1440` cover (`cover-3x4.png`), and verifies every character on the poster; `deliver.mjs` then copies the video, cover and copy (title, description, tags, full script, sources) into `ve/<slug>/` for cloud sync and review.
 8. **Automated Douyin Publishing**: Uploads via `publish_video` (supports public, private, scheduled, or `dry_run=true`) — feeding fresh playback data back into Step 1.
 
 ---
@@ -197,6 +197,7 @@ node $S/bgm.mjs list && node $S/bgm.mjs pick videos/my-video --track "keyword"  
 node $S/sfx.mjs videos/my-video       # effects track: every effect gets a synthesised sound at the moment it fires
 node $S/bgm.mjs mix videos/my-video
 node $S/render.mjs videos/my-video --grain 2   # optional film grain (none for pixel art)
+node $S/deliver.mjs videos/my-video   # after the cover: ../ve/my-video/ gets 1-video.mp4, 2-cover.png, 3-copy.md (+ ve/index.md)
 ```
 
 ## 🔒 Local Private Configuration (`.local/`)

@@ -108,7 +108,7 @@
 ④ 豆包配音 ── tts.mjs：流式合成 audio/voice.wav + 逐字时间戳对齐字幕 timing.js + 锁定各幕真实秒数
 ⑤ 动效画面 ── 先定片型（有 IP 角色：舞台剧 · 一镜到底；纯数据：世界画布）→ 填分镜表，逐句挑零件「演」出来（聊天窗、终端、代码 diff、榜单换名次、信息淹没……）→ 写 index.html → check.mjs 机器自检 → snap.mjs 截图对照审美准则复核
 ⑥ 混音渲染 ── bgm.mjs pick 选曲并量出拍子（换场自动卡点）→ sfx.mjs 给每个动效自动配音效 → bgm.mjs mix 人声 / 音效 / BGM 闪避混音 → render.mjs 逐帧渲染 1920×1080 60fps MP4（可加胶片颗粒）+ ffprobe 质检
-⑦ 竖版封面 ── 抽代表帧生成 1080×1440（3:4）醒目海报封面，逐字核验三要素无错字
+⑦ 竖版封面 ── 抽代表帧生成 1080×1440（3:4）醒目海报封面，逐字核验三要素无错字 → deliver.mjs 把成片、封面、文案交付到 ve/<slug>/（同步云盘、给同事看）
 ⑧ 自动发布 ── publish_video 上传创作者中心（支持公开 / 仅自己可见 / 定时 / dry-run）→ 播放数据回流第 ① 步 ↺
 ```
 
@@ -168,6 +168,7 @@ auto-video-workflow/
     │   ├── shot.mjs              给出处网页截图存进 assets/shots/，当片子里的真素材
     │   ├── snap.mjs              每个分镜截「到位帧 + 后段帧」拼成 sheet.jpg，另出手机尺寸的 phone.jpg
     │   ├── render.mjs            时长一致性核验 + 1080p 60fps 渲染 + 音轨合成 + ffprobe 质检
+    │   ├── deliver.mjs           交付：ve/<slug>/ 下放 1-video.mp4、2-cover.png、3-copy.md（标题简介话题、口播全文、出处），并刷新 ve/index.md 一览表
     │   └── lib.mjs               配置加载、字幕断句对齐、节拍网格分析与 Chrome 视口包装器工具库
     └── references/
         ├── analytics.md          账号播放数据拉取、2s/5s 跳出率解读与创作纠偏处方
@@ -315,6 +316,7 @@ node $S/bgm.mjs list && node $S/bgm.mjs pick videos/my-video --track "曲名"  #
 node $S/sfx.mjs videos/my-video                           #    音效轨：每个动效自动配一个音效
 node $S/bgm.mjs mix videos/my-video                       #    配音 + 音效 + BGM 自动压限闪避混音
 node $S/render.mjs videos/my-video --grain 2              # 5. 校验分镜时长 + 渲染 1080p 60fps 成片（--grain 胶片颗粒，像素风不加）+ ffprobe 质检
+node $S/deliver.mjs videos/my-video                       # 6. 做完封面后交付：../ve/my-video/ 下放成片、封面、文案（发布后补上链接再跑一次）
 ```
 
 每条视频都是 `videos/<slug>/` 下一个完全自包含的独立工程：
@@ -333,6 +335,17 @@ videos/<slug>/
 └── cover/            参考抽帧与裁剪对齐后的 1080×1440（3:4）发布封面
 ```
 
+成品交付到仓库旁边的 `ve/`（`profile.json` 的 `deliver_dir` 可改），一条视频一个文件夹，适合直接同步到云盘：
+
+```text
+ve/
+├── index.md          所有视频一览：标题、时长、发布链接
+└── <slug>/
+    ├── 1-video.mp4   成片
+    ├── 2-cover.png   3:4 封面（有横版再加 2-cover-16x9.jpg）
+    └── 3-copy.md     文案：标题、简介、话题、封面文字、口播全文、资料出处、发布链接
+```
+
 ---
 
 ## 🔒 本机私有配置（`.local/`）
@@ -345,7 +358,7 @@ cp -R .local.example .local
 
 | 文件 | 作用说明 |
 |---|---|
-| `.local/profile.json` | 配置 `account`（绑定账号名）、`keywords`（自动选题池）、`visibility`（默认可见性）、`review_analytics`（默认 `true`，每次出片前自动拉取本号播放数据）、`analytics_limit`、`voices`、`motion_lib` |
+| `.local/profile.json` | 配置 `account`（绑定账号名）、`keywords`（自动选题池）、`visibility`（默认可见性）、`review_analytics`（默认 `true`，每次出片前自动拉取本号播放数据）、`analytics_limit`、`voices`、`motion_lib`、`deliver_dir`（成品交付目录，默认仓库旁边的 `ve/`）、`cast_names`（文案里的角色名） |
 | `.local/strategy.md` | **个人专属创作与复盘流程**（优先级高于通用 `SKILL.md`）：可写入「每次出片前必查 5 秒跳出率并写三条改进动作」「片尾必埋评论区互动钩子」「固定角色搭档与口吻禁区」等私有规则 |
 
 ---

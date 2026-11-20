@@ -87,7 +87,7 @@
 4. **配音先行鎖定時間軸**：`tts.mjs` 合成 `audio/voice.wav` 與逐字對齊 `timing.js`，物理杜絕音畫錯位。
 5. **宣告式動效與截圖自檢**：先定片型（有 IP 角色用舞台劇 · 一鏡到底，純資料用世界畫布），逐句挑零件「演」出來，用 `motion-lib` 撰寫 `index.html`，執行 `check.mjs` 與 `snap.mjs`，對照審美準則逐格檢查。
 6. **卡點、音效、BGM 閃避混音與 60fps 渲染**：`bgm.mjs pick` 量出拍子讓換場卡點，`sfx.mjs` 給每個動效配音效，`bgm.mjs mix` + `render.mjs` 輸出 `1920×1080` `60fps` MP4 並以 `ffprobe` 驗收。
-7. **3:4 直式封面海報**：抽取代表格生成並裁切 `1080×1440` 封面，逐字核驗無錯字。
+7. **3:4 直式封面海報與交付**：抽取代表格生成並裁切 `1080×1440` 封面，逐字核驗無錯字；再用 `deliver.mjs` 把成片、封面、文案交付到 `ve/<slug>/`，方便同步雲端硬碟、給同事看。
 8. **自動發布回流**：呼叫 `publish_video` 發布至創作者中心，最新播放數據回流至下一步循環。
 
 ---
@@ -162,6 +162,7 @@ node $S/bgm.mjs list && node $S/bgm.mjs pick videos/my-video --track "曲名"   
 node $S/sfx.mjs videos/my-video       # 音效軌：每個動效按觸發時間自動配一個音效
 node $S/bgm.mjs mix videos/my-video
 node $S/render.mjs videos/my-video --grain 2   # 膠片顆粒（像素風不加）
+node $S/deliver.mjs videos/my-video   # 做完封面後交付：../ve/my-video/ 放 1-video.mp4、2-cover.png、3-copy.md（標題簡介話題、口播全文、出處）
 ```
 
 ## 🔒 本機私有配置（`.local/`）

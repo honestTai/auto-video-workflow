@@ -8,5 +8,7 @@
   "voices": {
     "host": "zh_female_vv_uranus_bigtts"
   },
-  "motion_lib": ""
+  "motion_lib": "",
+  "deliver_dir": "../ve",
+  "cast_names": { "host": "主持人", "guest": "嘉宾" }
 }

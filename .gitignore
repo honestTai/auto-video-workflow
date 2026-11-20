@@ -40,3 +40,6 @@ skills/auto-video-workflow/references/recipes*/cover/
 skills/auto-video-workflow/references/recipes*/assets/chars/
 skills/auto-video-workflow/references/recipes*/assets/ip-cast*
 skills/auto-video-workflow/references/recipes*/assets/shots/
+
+# 成品交付目录（deliver.mjs 默认放在仓库旁边；放进仓库里时也不提交）
+ve/

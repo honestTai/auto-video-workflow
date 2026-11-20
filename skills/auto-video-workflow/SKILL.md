@@ -25,7 +25,7 @@ description: 给一个主题（或从配置的关键词里自动选题），全�
 
 **配置。** 依次找 `profile.json` 和 `strategy.md`：先看仓库根目录的 `.local/`，再看 `~/.config/auto-video-workflow/`。都没有就按通用流程走。
 
-- `profile.json`：`account`（要发布到的抖音账号名）、`keywords`（选题关键词池）、`visibility`（0 公开 / 1 仅自己可见 / 2 好友可见，缺省 0）、`allow_download`、`voices`（默认音色）、`motion_lib`（动效库路径）、`review_analytics`（出片前是否拉取本号播放数据复盘，缺省 `true`）、`analytics_limit`（复盘最近几条作品，缺省 `10`）。
+- `profile.json`：`account`（要发布到的抖音账号名）、`keywords`（选题关键词池）、`visibility`（0 公开 / 1 仅自己可见 / 2 好友可见，缺省 0）、`allow_download`、`voices`（默认音色）、`motion_lib`（动效库路径）、`review_analytics`（出片前是否拉取本号播放数据复盘，缺省 `true`）、`analytics_limit`（复盘最近几条作品，缺省 `10`）、`deliver_dir`（成品交付目录，缺省是仓库旁边的 `ve/`）、`cast_names`（交付文案里的角色名，例如 `{"host": "主持人名"}`）。
 - `strategy.md`：用户自己的附加创作要求。**它的要求优先于本文件和 `references/` 里的通用写法**，写文案和发布信息时照做，但不要把它的内容写进任何会入库的文件。
 
 **复盘本号播放数据。** 只要账号凭证已就绪且未显式关闭（`review_analytics !== false`），先读 `references/analytics.md`，调 `douyin-video-mcp` 的 `get_account_analytics`（未挂载 MCP 时用 `mcp/.venv/bin/python mcp/douyin_cli.py analytics --limit 10`）拉取本号近期作品的播放量、**2 秒跳出率**、**5 秒跳出率（`bounce_rate_5s`）**、完播率、平均播放时长与互动吸粉率；必要时对表现最好和跳出最高的代表作调 `get_video_diagnosis` 看同级对比与流量来源。把短板原因和本期针对性改法记下来，写进第 2 步的 `<工程>/script.md` 顶部，并在开头前 5 秒钩子、分镜节奏和收尾互动里兑现。
@@ -175,6 +175,24 @@ ffmpeg -y -i <工程>/cover/poster.png -vf "scale=1080:1440:force_original_aspec
 
 没有生图能力，或重试后文字仍然不对：不要卡住，直接用成片里最有代表性的一帧当封面（把上面抽帧命令的输出改成 `cover/cover-3x4.png` 并按同样方式裁切），在最后的汇报里说明。
 
+### 交付：成片、封面、文案放进 `ve/`
+
+封面做好后马上交付（发不发布都要做）：
+
+```bash
+node SKILL/scripts/deliver.mjs <工程>
+```
+
+它会建 `ve/<slug>/`（默认在仓库旁边；`profile.json` 写了 `deliver_dir` 就用那个目录），放进三样东西，并刷新 `ve/index.md` 一览表：
+
+| 文件 | 内容 |
+|---|---|
+| `1-video.mp4` | 成片 |
+| `2-cover.png` | 3:4 竖版封面（有横版再加 `2-cover-16x9.jpg`） |
+| `3-copy.md` | 文案：标题、简介、话题、封面文字、口播全文、资料出处、发布链接 |
+
+`ve/` 是给人看、同步到云盘的；工程目录里的其他东西不用给别人。发布成功后把作品链接写进 `project.json` 的 `publish.links`（例如 `{"抖音": "https://…"}`）再跑一次；重新渲染或换了封面也再跑一次。口播全文里的角色名取 `project.json` 的 `cast`，没有就取 `profile.json` 的 `cast_names`。
+
 ## 第 7 步：发布
 
 1. 调 `account_status`：`runtime_status` 要是 `saved`；`profile.json` 里写了 `account` 的话，绑定的账号名要和它一致。不满足就停下来告诉用户。
@@ -203,7 +221,7 @@ mcp/.venv/bin/python mcp/douyin_cli.py publish --video <成片> --cover <封面>
 - 选题和一句话结论，用到的主要出处
 - 用了哪些配方、几张真素材，BGM 是哪首
 - `check.mjs` 最后一次的结果（还剩哪些「!」没改、为什么）
-- 成片路径（时长、分辨率）和封面路径
+- 交付文件夹 `ve/<slug>/`（成片时长、分辨率，封面，文案）
 - 发布的标题、简介、标签
 - 发布到的账号和作品链接（dry-run 或只出片时说明没有发布）
 - 过程中降级处理的地方（比如没有曲库用了纯人声、封面用的是成片截帧）

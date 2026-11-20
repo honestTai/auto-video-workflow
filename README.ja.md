@@ -149,6 +149,7 @@ node $S/bgm.mjs list && node $S/bgm.mjs pick videos/my-video --track "keyword"  
 node $S/sfx.mjs videos/my-video       # 効果音トラック：各エフェクトの発火時刻に合成した効果音を自動で付ける
 node $S/bgm.mjs mix videos/my-video
 node $S/render.mjs videos/my-video --grain 2   # フィルムグレイン（ピクセル画では付けない）
+node $S/deliver.mjs videos/my-video   # カバー完成後：../ve/my-video/ に 1-video.mp4・2-cover.png・3-copy.md（タイトル・説明・タグ・台本・出典）を納品し、ve/index.md を更新
 ```
 
 ## 🔒 ローカル非公開設定（`.local/`）
