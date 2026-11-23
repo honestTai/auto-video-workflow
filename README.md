@@ -238,10 +238,12 @@ chmod 600 ~/.config/auto-video-workflow/volc.env
 ### 5. 挂载 Skill 并一句话启动出片
 
 ```bash
-# 软链到你常用的 AI Coding Agent
-ln -s "$PWD/skills/auto-video-workflow" ~/.claude/skills/auto-video-workflow     # Claude Code
-ln -s "$PWD/skills/auto-video-workflow" ~/.codex/skills/auto-video-workflow      # Codex
-mkdir -p ~/.gemini/config/skills && ln -s "$PWD/skills/auto-video-workflow" ~/.gemini/config/skills/auto-video-workflow  # Antigravity
+# 软链到你常用的国内外 AI 智能体（均基于标准 SKILL.md 技能目录）
+ln -s "$PWD/skills/auto-video-workflow" ~/.claude/skills/auto-video-workflow       # Claude Code
+ln -s "$PWD/skills/auto-video-workflow" ~/.codex/skills/auto-video-workflow        # Codex
+mkdir -p ~/.gemini/config/skills && ln -s "$PWD/skills/auto-video-workflow" ~/.gemini/config/skills/auto-video-workflow  # Antigravity（反重力）
+mkdir -p ~/.kimi-code/skills && ln -s "$PWD/skills/auto-video-workflow" ~/.kimi-code/skills/auto-video-workflow          # Kimi Code（月之暗面）
+mkdir -p ~/.workbuddy/skills && ln -s "$PWD/skills/auto-video-workflow" ~/.workbuddy/skills/auto-video-workflow          # 腾讯 WorkBuddy（亦支持客户端导入）
 ```
 
 在仓库目录下向 Agent 直接下达指令（推荐搭配 **[HRouter](https://hrouter.net/)** 接入 Claude / GPT / Gemini）：

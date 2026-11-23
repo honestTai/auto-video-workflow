@@ -80,7 +80,7 @@ node SKILL/scripts/init-project.mjs <slug> --topic "主题"     # slug 用英文
 }
 ```
 
-- 口播 60–90 秒，约 300–450 字，8–16 个分镜；开头 3–5 秒直接抛结果、反常识或硬数字。
+- 口播 60–110 秒，约 300–550 字，8–16 个分镜；**前 5 秒必须同时做到「给观众一个确定性的结果」+「和观众建立直接联系」**（拒绝主创自嗨与寒暄，全程保持强利他属性，句句回答「观众能拿走什么、帮他避什么坑」）。
 - 一个逗号一行字幕，每行 6–16 字。每个分镜用 `{花括号}` 标 1–2 个重点词。
 - 单人讲解不用写 `speaker` 和 `voices`；双人或多人对话给每句写 `speaker`，在 `voices` 里给每个角色配不同音色。
 - `publish.title` 不超过 20 个字符；`tags` 3–5 个；`cover` 三要素按 `copywriting.md` 写。
@@ -106,15 +106,17 @@ node SKILL/scripts/tts.mjs <工程>
   - 舞台剧还有一种电影感的拍法 **「一镜到底」**：所有场景是同一栋楼里的房间，镜头不剪，推进、横移穿墙、升降穿楼板、推进照片里。`strategy.md` 指定时才用，做法见 `stage-play.md` 第 3.5 节。
 - **世界画布**：没有角色、以截图和数据为主时用。读 `references/motion-lib-guide.md` 和 `references/scene-recipes.md`，按下面的步骤做。
 
-**写画面是「挑配方、填内容」，不是从空白页开始设计。**
+**写画面的核心原则：「文案驱动分镜，动效服务利他，克制不花哨」。**
+- 根据每一句口播要帮观众看懂什么，设计最恰到好处的分镜构图与动效。
+- 优先使用 `motion-lib` 里契合语义的现成组件与动效（`references/recipes/index.html` 与 `motion-lib/examples/` 可供参考，但**不要被固定配方框死，更不要因为库里没有某个动效就乱塞不相关的花哨动效**）。
+- 如果某个分镜需要的表达方式在 `motion-lib` 中尚不存在，**直接基于确定性 GSAP 主时间线规范新写该组件/动效**（通用性强的可直接沉淀进 `motion-lib` 并跑 `gen-readme.mjs`）。
 
 **先读 `references/aesthetic-rules.md`**（节奏、镜头、画面、声音的审美判例，每条都附了真实踩过的坑）；截图自检时逐条对照。
 
-1. **填分镜表。** 在 `<工程>/script.md` 里加一节「分镜表」，每个分镜一行：时长、这句在讲什么、用哪个配方（R01–R11）、主素材、念到哪句触发什么。
-   格式和四条检查规则见 `scene-recipes.md` 第 1 节。表没填完不要写代码。
-2. **写 `<工程>/index.html`。** `init-project.mjs` 生成的页面已经是世界画布的骨架（`data-world` + `theme-studio`）：
+1. **填分镜表。** 在 `<工程>/script.md` 里加一节「分镜表」，每个分镜一行：时长、核心利他信息、画面构图与主素材、选用的 `motion-lib` 组件/动效（或自写动效）。表没填完不要写代码。
+2. **写 `<工程>/index.html`。** `init-project.mjs` 生成的页面已经是世界画布的骨架（`data-world`，可按题材选 `theme-studio` 深色演播室或 `theme-white3d` 纯白 3D 影棚等皮肤）：
    - 一个分镜一个 `<section class="scene" data-scene="S01" data-d="…">`，顺序和 `scenes` 一一对应，`data-d` 用第 3 步打印的真实秒数。
-   - 每个分镜的内容从 `references/recipes/index.html` 里**整段复制对应的配方**，再按 `scene-recipes.md` 第 3 节改文字、图片和时间。
+   - 按分镜表编写每个分镜的布局、真素材与触发时间（主视觉从 `@0` 就位，口播时间点触发聚焦/翻面/步进等高价值反馈）。
    - **不写 `data-in`**：换分镜默认就是镜头走过去。第 1 个分镜加 `cam-wide@0 cam-home@0.9`，最后 1 个分镜加 `cam-wide@-2.4`。
    - 常驻层里的进度线：`data-n` 改成章节数，每章第一个分镜的开始秒数写一个 `segment@秒数(i=第几章)`；常驻层的 `data-d` 改成全片秒数。
    - 账号有固定主持人 / IP 角色时（`strategy.md` 里会写）：角色会自己眨眼、呼吸、对口型；你要做的是让它**跟着内容走**——讲到哪个元素，就在那个元素上写 `call@秒数(who=角色名)`，不要让角色全程待在同一个地方（见 `motion-lib-guide.md` 2.5 节）。
@@ -193,10 +195,11 @@ node SKILL/scripts/deliver.mjs <工程>
 
 `ve/` 是给人看、同步到云盘的；工程目录里的其他东西不用给别人。发布成功后把作品链接写进 `project.json` 的 `publish.links`（例如 `{"抖音": "https://…"}`）再跑一次；重新渲染或换了封面也再跑一次。口播全文里的角色名取 `project.json` 的 `cast`，没有就取 `profile.json` 的 `cast_names`。
 
-## 第 7 步：发布
+## 第 7 步：发布（抖音 + YouTube 双平台同步）
 
-1. 调 `account_status`：`runtime_status` 要是 `saved`；`profile.json` 里写了 `account` 的话，绑定的账号名要和它一致。不满足就停下来告诉用户。
-2. 调 `publish_video`：
+1. **发布到抖音**：
+   - 调 `account_status`：`runtime_status` 要是 `saved`；`profile.json` 里写了 `account` 的话，绑定的账号名要和它一致。不满足就停下来告诉用户。
+   - 调 `publish_video`：
 
 | 参数 | 值 |
 |---|---|
@@ -212,7 +215,15 @@ node SKILL/scripts/deliver.mjs <工程>
 mcp/.venv/bin/python mcp/douyin_cli.py publish --video <成片> --cover <封面> --title "标题" --desc "简介" --tags "AI,MCP"
 ```
 
-3. 返回 `status: "published"` 才算发布成功。返回 `failed` 时，登录或验证类的错误停下来请用户处理；其他错误把原始报错如实告诉用户，不要反复重试上传。
+   - 返回 `status: "published"` 才算发布成功。返回 `failed` 时，登录或验证类的错误停下来请用户处理；其他错误把原始报错如实告诉用户，不要反复重试上传。
+
+2. **同步发布到 YouTube（默认公开 `public`）**：
+   - 抖音发布后，继续调用 `yt-publish.mjs` 通过本机 Chrome（`127.0.0.1:10086`）同步发布到 YouTube Studio（自动将 `cover-3x4.png` 转换为 16:9 横版缩略图 `cover-16x9.jpg` 并上传，标题、简介、话题标签与抖音保持一致，默认 `--visibility public` 公开）：
+
+```bash
+node SKILL/scripts/yt-publish.mjs <工程> --visibility public
+```
+   - 若用户要求 dry-run 则加 `--dry-run`。
 
 ## 最后的汇报
 
@@ -223,7 +234,7 @@ mcp/.venv/bin/python mcp/douyin_cli.py publish --video <成片> --cover <封面>
 - `check.mjs` 最后一次的结果（还剩哪些「!」没改、为什么）
 - 交付文件夹 `ve/<slug>/`（成片时长、分辨率，封面，文案）
 - 发布的标题、简介、标签
-- 发布到的账号和作品链接（dry-run 或只出片时说明没有发布）
+- 发布到的抖音作品链接与 YouTube 作品链接（dry-run 或只出片时说明没有发布）
 - 过程中降级处理的地方（比如没有曲库用了纯人声、封面用的是成片截帧）
 
 ## 参考

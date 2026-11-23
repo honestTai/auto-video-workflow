@@ -104,8 +104,10 @@ scenes.forEach((scene, i) => {
     const words = fs.existsSync(wordsFile) && !scene.tts ? JSON.parse(fs.readFileSync(wordsFile, "utf8")) : null;
     const byWords = words && words.length && words[words.length - 1].end <= d + 0.6 ? timeLinesFromWords(scene.say, words, t + pre) : null;
     if (byWords) timed++;
-    scene.lines = byWords || timeLines(scene.say, t + pre, t + pre + d);
-    scene.talk = [round2(t + pre), round2(t + pre + d)]; // 这个分镜里真正在说话的时间段（给角色口型用）
+    // 逐字时间戳可能比裁掉尾部静音后的音频略长：字幕不能超出真正说话的区间
+    const talkEnd = round2(t + pre + d);
+    scene.lines = (byWords || timeLines(scene.say, t + pre, t + pre + d)).map((l) => (l.end > talkEnd ? { ...l, end: talkEnd } : l));
+    scene.talk = [round2(t + pre), talkEnd]; // 这个分镜里真正在说话的时间段（给角色口型用）
   }
   t = round2(t + scene.duration);
   scene.end = t;
