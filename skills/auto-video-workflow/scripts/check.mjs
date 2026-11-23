@@ -32,7 +32,7 @@ function loadCatalog() {
   new Function("window", fs.readFileSync(path.join(lib, "fx.js"), "utf8"))(win);
   const owner = new Map(), names = () => [...Object.keys(win.FX.fx), ...Object.keys(win.FX.trans).map((k) => "in:" + k), ...Object.keys(win.FX.make).map((k) => "make:" + k)];
   let seen = new Set(names());
-  for (const f of ["fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-ink.js", "fx-chat.js", "fx-diagram.js", "fx-shape.js", "fx-sound.js", "cam-smooth.js"]) {
+  for (const f of ["fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-ink.js", "fx-chat.js", "fx-diagram.js", "fx-shape.js", "fx-desk3d.js", "fx-sound.js", "cam-smooth.js"]) {
     const file = path.join(lib, f);
     if (!fs.existsSync(file)) continue;
     try { new Function("window", "document", fs.readFileSync(file, "utf8"))(win, { createElement: fake, getElementById: () => null, head: { appendChild() {} } }); } catch { /* 需要完整浏览器环境的模块跳过，下面按源码里的注册语句补名字 */ }
@@ -80,7 +80,7 @@ blocks.forEach((b, i) => {
   if (tin && !overlay) {
     const t = parseToken(tin.trim());
     if (!t.name || !cat.trans.has(t.name)) err(id, `没有这个转场：${tin}${t.name ? suggest(t.name, cat.trans) : ""}`);
-    else { needModule(id, "in:" + t.name, `转场 ${t.name}`); kinds.set(t.name, (kinds.get(t.name) || 0) + 1); if (world && !["cam-to", "cam-jump"].includes(t.name)) err(id, `世界画布（data-world）里换分镜只能用 cam-to 或 cam-jump，这里写的是 ${t.name}：删掉 data-in 即可（默认就是 cam-to）`); }
+    else { needModule(id, "in:" + t.name, `转场 ${t.name}`); kinds.set(t.name, (kinds.get(t.name) || 0) + 1); if (world && !["cam-to", "cam-jump", "card-wipe"].includes(t.name)) err(id, `世界画布（data-world）里换分镜只能用 cam-to、cam-jump 或 card-wipe，这里写的是 ${t.name}：删掉 data-in 即可（默认就是 cam-to）`); }
   }
   const events = [0];      // 这个分镜里所有视觉事件的时间，用来查「多久没有变化」
   for (const m of b.matchAll(/data-fx="([^"]*)"/g)) { let last = 0; for (const tk of tokens(m[1])) {
@@ -97,8 +97,8 @@ blocks.forEach((b, i) => {
       events.push(last + fd);
     }     // 说话、播序列帧是持续的，不算一次变化
     if (t.name === "fly") { const n = parseInt((tk.match(/\bto=(\d+)/) || [])[1] || "6", 10), each = parseFloat((tk.match(/each=([\d.]+)/) || [])[1] || "0.7"); for (let k = 1; k < n; k++) events.push(last + k * each); }
-    if (t.name === "helix-spin" || t.name === "marquee" || t.name === "parallax") for (let x = last + 1; x < d; x += 1) events.push(x);     // 一直在动的
-    if (t.name === "skeleton" || t.name === "drop-gather") events.push(last + 0.7, last + 1.4, last + 2.0);
+    if (t.name === "helix-spin" || t.name === "marquee" || t.name === "parallax" || t.name === "wall-pull" || t.name === "card-storm") for (let x = last + 1; x < d; x += 1) events.push(x);     // 一直在动的
+    if (t.name === "skeleton" || t.name === "drop-gather" || t.name === "layer-explode" || t.name === "deal-arc" || t.name === "cal-flip" || t.name === "stack-print" || t.name === "slab-shatter" || t.name === "board-lay") events.push(last + 0.7, last + 1.4, last + 2.0);
     const multi = tk.match(/\bi=([\d/]+)[,)]/), every = parseFloat((tk.match(/every=([\d.]+)/) || [])[1] || "0.28");
     if (multi && multi[1].includes("/")) multi[1].split("/").forEach((_, k) => events.push(last + k * every));
   } }

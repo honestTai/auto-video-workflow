@@ -203,6 +203,8 @@
 | 皮肤 | 视觉 | 字幕样式 |
 |---|---|---|
 | `theme-studio`（默认） | 深色画布 + 一个强调色 | `studio` |
+| `theme-white3d` | **白底立体（纯白无影棚）**：高浮起卡片/真厚度 3D 样机 + 柔光落地影 | `pill` / `studio` |
+| `theme-white3d desk` | **白底立体（白格牌桌）**：随镜头视差移动的建筑方格桌面 + 扑克/包装盒/爆炸分层 | `pill` / `studio` |
 | `theme-gold` | 黑金电影感 | `plain` |
 | `theme-violet` | 白紫科技 | `pill` |
 | `theme-pixel` | 像素复古 | `bar` |
@@ -216,9 +218,37 @@
 <script src="lib/vendor/three-fx.min.js"></script>     <!-- 真 3D 需要，放在 fx.js 前 -->
 <script src="lib/fx.js"></script>
 <script src="lib/fx-world.js"></script>                <!-- 世界画布（必加） -->
+<script src="lib/fx-desk3d.js"></script>               <!-- 白底立体（配 theme-white3d）：phone3d / card3d / box3d / layers3d / deck3d / wall3d / flap3d -->
 <script src="lib/fx-particles.js"></script>            <!-- 2D 粒子：<div class="layer" data-make="space" data-fx="starfield@0"> -->
 <script src="lib/fx-3d.js"></script>                   <!-- 3D 场景：<div class="layer" data-make="stage3d" data-fx="stars3d@0"> -->
 ```
+
+### 9.1 白底立体全系组件与动效速查（`theme-white3d` + `fx-desk3d.js`，18 组件 · 30 动效 · `card-wipe` 转场）
+
+完整可运行样板见 `motion-lib/examples/white3d/index.html`：
+
+| 组件 / 类 | 用法 | 搭配动效 / 转场 |
+|---|---|---|
+| `data-make="letterdeck"` | 单字扑克牌阵排大标题（`data-text="知识讲解类博主\|要迎来{大洗牌}了"`） | `letter-shuffle@t` |
+| `data-make="sleeve3d"` | 立体外盒开口滑出整摞厚牌（`data-no="01"`、`data-title="第一批"`） | `sleeve-draw@t` |
+| `data-make="card3d"` | 双面纸叠厚边扑克或拍立得展卡（`data-polaroid="01\|标题\|副标"`、`data-facedown="1"`、`data-progress="1"`） | `flip-3d@t` / `pose-3d@t` / `polaroid-eject@t` |
+| `data-make="carousel3d"` | 底部手牌托底 + 台面拍立得连切轮播（内放多张 `<img data-title="…">`） | `carousel-next@t(steps=2)` |
+| `data-make="deck3d"` | 桌面厚牌堆与弧道（`data-count="10"`、`data-layout="horseshoe\|arc"`） | `deal-arc@0` / `deck-gather@t` |
+| 任意多卡容器 | 多宫格牌阵越级弹起放大 / 3D 卡片螺旋风暴 | `grid-hero@t(i=2)` / `card-storm@0` |
+| `data-make="box3d"` | 真六面体立体盒（`data-depth="46"`、`data-color="#2563eb"`、`data-side="BATCH 02"`） | `box-drop@0` / `each:box-drop@0` |
+| `data-make="slabs3d"` | 3D 厚石碑多米诺阵列（`data-labels="资本,MCN,流量"`，配 `desk-invert`） | `slab-shatter@t` + `desk-invert@0` |
+| `data-make="coins3d"` | 3D 立体筹码 / 金币组（`data-count="5"`、`data-symbol="$"`） | `coin-drop@0` |
+| `data-make="layers3d"` | 三维爆炸分层架构台（子元素从底到顶写 `data-label`、`data-sub`、`data-color`） | `layer-explode@0` + `layer-focus@t(i=2)` |
+| `data-make="timeline3d"` | 立面面板后仰 56° 变 3D 剪辑时间轴轨道（内放多张视频缩略 `<img>`） | `board-lay@t` |
+| `data-make="paperstack"` | 白纸复印叠厚 + 新鲜感衰减进度条（`data-sheets="8"`） | `stack-print@t(to=62)` |
+| `data-make="callouts3d"` | 四角取景框锁定 + 多分支水平引线组（`data-items="你本人,面孔,声音"`） | `lock-callouts@t` |
+| `data-make="youarehere"` | 「YOU ARE HERE」全片分段路标游标卡 | `pin-move@t(from=0.2,to=0.75)` |
+| `data-make="wall3d"` | 白底 3D 倾斜悬浮卡片矩阵（`data-cols="4"`） | `wall-pull@0` |
+| `data-make="phone3d"` | 真厚度圆角金属框 3D 竖屏手机（`data-tilt="-16,5,0"`、`data-color="graphite\|silver\|blue"`） | `pose-3d@t` / `rig-focus@t(i=2)` / `phone-split@0` / `phone-wave@0` / `screen-pop@t` / `each:bubble-pop3d@t` |
+| `data-make="flap3d"` | 立体机械翻牌计数器（`data-value="1,000+"`） | `flap-to@t(to=10_000+)` |
+| `data-make="calgrid3d"` | 30 天日历翻牌打卡矩阵 + 顶部涨粉计数器联动（`data-days="30"`） | `cal-flip@t(to=18862)` |
+| `data-make="ctabar"` | 白底高浮起交互胶囊（`data-kind="send\|follow"`） | `cta-click@t` |
+| 转场 `data-in="card-wipe"` | **3D 巨卡贴脸擦镜转场**（世界画布与普通模式通用，大章节切换用） | 写在后一个 `<section class="scene" data-in="card-wipe">` |
 
 粒子和 3D 只当某一个分镜的主视觉用（比如开场），不要当全片的背景装饰。当主视觉用时给那个容器加 `data-lint="content"`，否则 `check.mjs` 会把全屏画布当成背景、报「画面是空的」。
 

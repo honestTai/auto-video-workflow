@@ -31,7 +31,7 @@ const motionLib = candidates.find(isMotionLib);
 if (!motionLib) die("没有找到 motion-lib。先 git clone https://github.com/honestTai/motion-lib，再用 --motion-lib <目录> 或环境变量 MOTION_LIB_DIR 指给我。找过的位置：\n  " + candidates.join("\n  "));
 
 fs.mkdirSync(path.join(dir, "lib"), { recursive: true });
-for (const item of ["fx.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-ink.js", "fx-chat.js", "fx-diagram.js", "fx-shape.js", "fx-sound.js", "sfx.mjs", "fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx.css", "chrome-tall.sh", "fonts", "vendor", "assets"]) {
+for (const item of ["fx.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-ink.js", "fx-chat.js", "fx-diagram.js", "fx-shape.js", "fx-desk3d.js", "fx-sound.js", "sfx.mjs", "fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx.css", "chrome-tall.sh", "fonts", "vendor", "assets"]) {
   const src = path.join(motionLib, item);
   if (fs.existsSync(src)) fs.cpSync(src, path.join(dir, "lib", item), { recursive: true, force: true });
 }
