@@ -26,7 +26,7 @@
   </a>
 </div>
 
-> ⚡ **官方算力合作夥伴 [HRouter](https://hrouter.net/)**：**一把 API Key 直連 Claude / GPT / Gemini / Grok**。無需分別訂閱昂貴月費，餘額即時到帳、消費逐筆可查、用多少付多少。原生相容 **[Claude Code](https://hrouter.net/docs/claude-code/)**、**[Codex](https://hrouter.net/docs/codex/)**、**[Gemini CLI](https://hrouter.net/docs/gemini-cli/)** 與生圖 API —— 讓 AI Coding Agent 一口氣跑完「拉取帳號留存數據 → 搜證寫稿 → `motion-lib` 60fps 動效渲染 → 生圖出封面 → 自動發抖音」全流程！👉 **[官網 hrouter.net](https://hrouter.net/)** · **[模型與即時價格](https://hrouter.net/models/)** · **[快速接入教學](https://hrouter.net/docs/index/)**
+> ⚡ **官方算力合作夥伴 [HRouter](https://hrouter.net/)**：**一把 API Key 直連 Claude / GPT / Gemini / Grok**。無需分別訂閱昂貴月費，餘額即時到帳、消費逐筆可查、用多少付多少。原生相容 **[Claude Code](https://hrouter.net/docs/claude-code/)**、**[Codex](https://hrouter.net/docs/codex/)**、**[Gemini CLI](https://hrouter.net/docs/gemini-cli/)**, **[DeepSeek](https://hrouter.net/docs/deepseek/)** 與生圖 API —— 讓 AI Coding Agent 一口氣跑完「拉取帳號留存數據 → 搜證寫稿 → `motion-lib` 60fps 動效渲染 → 生圖出封面 → 自動發抖音」全流程！👉 **[官網 hrouter.net](https://hrouter.net/)** · **[模型與即時價格](https://hrouter.net/models/)** · **[快速接入教學](https://hrouter.net/docs/index/)**
 
 ---
 
