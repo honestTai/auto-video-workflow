@@ -109,7 +109,7 @@ node SKILL/scripts/tts.mjs <工程>
 **写画面的核心原则：「文案驱动分镜，动效服务利他，克制不花哨」。**
 - 根据每一句口播要帮观众看懂什么，设计最恰到好处的分镜构图与动效。
 - 优先使用 `motion-lib` 里契合语义的现成组件与动效（`references/recipes/index.html` 与 `motion-lib/examples/` 可供参考，但**不要被固定配方框死，更不要因为库里没有某个动效就乱塞不相关的花哨动效**）。
-- 如果某个分镜需要的表达方式在 `motion-lib` 中尚不存在，**直接基于确定性 GSAP 主时间线规范新写该组件/动效**（通用性强的可直接沉淀进 `motion-lib` 并跑 `gen-readme.mjs`）。
+- 如果某个分镜需要的表达方式在 `motion-lib` 中尚不存在，**直接基于确定性 GSAP 主时间线规范新写该组件/动效**（通用性强的可直接沉淀进 `motion-lib/src/modules/` 并跑 `node scripts/gen-readme.mjs`）。
 
 **先读 `references/aesthetic-rules.md`**（节奏、镜头、画面、声音的审美判例，每条都附了真实踩过的坑）；截图自检时逐条对照。
 

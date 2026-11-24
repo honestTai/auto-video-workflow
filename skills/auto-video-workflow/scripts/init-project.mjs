@@ -20,7 +20,10 @@ const isSlug = /^[a-z0-9][a-z0-9-]*$/i.test(rest[0]);
 const dir = path.resolve(isSlug ? path.join(opts.root || "videos", rest[0]) : rest[0]);
 const slug = path.basename(dir);
 
-const isMotionLib = (d) => d && fs.existsSync(path.join(d, "fx.js")) && fs.existsSync(path.join(d, "fx.css"));
+const isMotionLib = (d) => d && (
+  (fs.existsSync(path.join(d, "src", "core", "fx.js")) && fs.existsSync(path.join(d, "src", "core", "fx.css"))) ||
+  (fs.existsSync(path.join(d, "fx.js")) && fs.existsSync(path.join(d, "fx.css")))
+);
 const candidates = [
   opts["motion-lib"], process.env.MOTION_LIB_DIR, loadProfile().motion_lib,
   path.join(REPO_ROOT, "motion-lib"), path.join(REPO_ROOT, "..", "motion-lib"),
@@ -30,10 +33,35 @@ const candidates = [
 const motionLib = candidates.find(isMotionLib);
 if (!motionLib) die("没有找到 motion-lib。先 git clone https://github.com/honestTai/motion-lib，再用 --motion-lib <目录> 或环境变量 MOTION_LIB_DIR 指给我。找过的位置：\n  " + candidates.join("\n  "));
 
-fs.mkdirSync(path.join(dir, "lib"), { recursive: true });
-for (const item of ["fx.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-ink.js", "fx-chat.js", "fx-diagram.js", "fx-shape.js", "fx-desk3d.js", "fx-sound.js", "sfx.mjs", "fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx.css", "chrome-tall.sh", "fonts", "vendor", "assets"]) {
-  const src = path.join(motionLib, item);
-  if (fs.existsSync(src)) fs.cpSync(src, path.join(dir, "lib", item), { recursive: true, force: true });
+const libDir = path.join(dir, "lib");
+fs.mkdirSync(libDir, { recursive: true });
+if (fs.existsSync(path.join(motionLib, "src", "core", "fx.js"))) {
+  for (const coreFile of ["fx.js", "fx.css"]) {
+    fs.copyFileSync(path.join(motionLib, "src", "core", coreFile), path.join(libDir, coreFile));
+  }
+  const modRoot = path.join(motionLib, "src", "modules");
+  if (fs.existsSync(modRoot)) {
+    for (const group of fs.readdirSync(modRoot)) {
+      const groupDir = path.join(modRoot, group);
+      if (!fs.statSync(groupDir).isDirectory()) continue;
+      for (const f of fs.readdirSync(groupDir)) {
+        if (f.endsWith(".js")) fs.copyFileSync(path.join(groupDir, f), path.join(libDir, f));
+      }
+    }
+  }
+  for (const scriptFile of ["sfx.mjs", "chrome-tall.sh"]) {
+    const sf = path.join(motionLib, "scripts", scriptFile);
+    if (fs.existsSync(sf)) fs.copyFileSync(sf, path.join(libDir, scriptFile));
+  }
+  for (const assetDir of ["fonts", "vendor", "assets"]) {
+    const ad = path.join(motionLib, assetDir);
+    if (fs.existsSync(ad)) fs.cpSync(ad, path.join(libDir, assetDir), { recursive: true, force: true });
+  }
+} else {
+  for (const item of ["fx.js", "fx-world.js", "fx-puppet.js", "fx-stage.js", "fx-oner.js", "fx-ink.js", "fx-chat.js", "fx-diagram.js", "fx-shape.js", "fx-desk3d.js", "fx-gallery3d.js", "fx-sound.js", "sfx.mjs", "fx-particles.js", "fx-3d.js", "fx-rig.js", "fx-vrm.js", "fx.css", "chrome-tall.sh", "fonts", "vendor", "assets"]) {
+    const src = path.join(motionLib, item);
+    if (fs.existsSync(src)) fs.cpSync(src, path.join(libDir, item), { recursive: true, force: true });
+  }
 }
 const camSmoothSrc = path.join(path.dirname(fileURLToPath(import.meta.url)), "cam-smooth.js");
 if (fs.existsSync(camSmoothSrc)) fs.copyFileSync(camSmoothSrc, path.join(dir, "lib", "cam-smooth.js"));

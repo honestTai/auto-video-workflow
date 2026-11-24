@@ -117,7 +117,7 @@
 | | `each:` | 每个直接子元素，按 `stagger` 依次触发 |
 | | `chars:` `words:` `lines:` | 拆成单字 / 单词 / 行逐个动 |
 
-**动效名只能用这份手册和 motion-lib `README.md`「动效目录」里有的。** 写错的名字页面不会报错、只是不动；`check.mjs` 会查出来并提示相近的名字。
+**动效名只能用这份手册和 motion-lib `docs/CATALOG.md`「全量动效目录」里有的。** 写错的名字页面不会报错、只是不动；`check.mjs` 会查出来并提示相近的名字。
 
 ## 5. 常用动效
 
@@ -205,6 +205,7 @@
 | `theme-studio`（默认） | 深色画布 + 一个强调色 | `studio` |
 | `theme-white3d` | **白底立体（纯白无影棚）**：高浮起卡片/真厚度 3D 样机 + 柔光落地影 | `pill` / `studio` |
 | `theme-white3d desk` | **白底立体（白格牌桌）**：随镜头视差移动的建筑方格桌面 + 扑克/包装盒/爆炸分层 | `pill` / `studio` |
+| `theme-white3d gallery` | **白底立体（暖白无影展厅）**：暖米白柔光棚顶 + 哑光地平线展台 + 朱橙点缀 + 真 3D 倒角 `.glb` 画框/步骤卡/白瓷巨碑 | `studio` / `pill` |
 | `theme-gold` | 黑金电影感 | `plain` |
 | `theme-violet` | 白紫科技 | `pill` |
 | `theme-pixel` | 像素复古 | `bar` |
@@ -250,13 +251,50 @@
 | `data-make="ctabar"` | 白底高浮起交互胶囊（`data-kind="send\|follow"`） | `cta-click@t` |
 | 转场 `data-in="card-wipe"` | **3D 巨卡贴脸擦镜转场**（世界画布与普通模式通用，大章节切换用） | 写在后一个 `<section class="scene" data-in="card-wipe">` |
 
+### 9.2 暖白无影展厅真 3D 片头组合速查（`theme-white3d gallery` + `fx-gallery3d.js`，4 组件 · 6 动效 · 4 个 `.glb` 模型）
+
+需先加载 `three-fx.min.js`、`three-vrm.min.js`、`assets/gallery3d/models-b64.js`（可选，供离线零延迟自检），再加载 `fx.js` 与 `fx-gallery3d.js`。完整可运行样板见 `motion-lib/examples/gallery3d/index.html`：
+
+| 组件 | 作用 | 搭配动效 |
+|---|---|---|
+| `data-make="gallery3d"` | 一镜到底五连拍 3D 展厅总舞台（内放 `.step-item` 与 `<img>` 素材） | `corridor-fly@0` → `hero-split3d@t` → `step-track3d@t` → `step-overview3d@t` → `monolith-rise3d@t` |
+| `data-make="corridor3d"` | 单分镜独立使用：3D 倒角画框长廊穿梭 + 大光圈柔焦定焦开场 | `corridor-fly@0` / `hero-split3d@t` |
+| `data-make="stepchain3d"` | 单分镜独立使用：3D 白瓷步骤竖卡横向滑轨跟拍 + 底部三维朱橙跳线球传导 | `step-track3d@0` / `step-overview3d@t` |
+| `data-make="monolith3d"` | 单分镜独立使用：步骤卡上移树状汇总 + 双层倒角白瓷巨碑翻起立定（展示开源仓库/总结铁律） | `monolith-rise3d@0` / `gallery-cam3d@t` |
+
+### 9.3 工业级 3D 硬件拆解与光学展台速查（`fx-showcase3d.js`，6 组件 · 12 动效 · 6 个可动 `.glb` 模型）
+
+需先加载 `three-fx.min.js`、`three-vrm.min.js`、`assets/showcase3d/models-b64.js`（可选，供离线零延迟自检），再加载 `fx.js` 与 `fx-showcase3d.js`。自带程序化 PMREM 柔光箱反射与三维锚点引线胶囊，暗色皮肤（`theme-studio` / `theme-gold`）与浅色皮肤（`theme-white3d` / `theme-violet`）通用。完整样板见 `motion-lib/examples/showcase3d/index.html`：
+
+| 组件 | 作用与常用属性 | 搭配动效 |
+|---|---|---|
+| `data-make="chip3d"` | 苹果发布会风 5 层可拆解 AI 芯片（81 颗镀金 BGA + PCB + 动态发光晶圆 + CNC 铝环 + 拉丝钛盖；`data-label="M5 ULTRA\|NEURAL SOC"`、`data-callouts="...,..."`） | `chip-explode@t` / `chip-assemble@t` / `showcase-orbit@t` |
+| `data-make="laptop3d"` | 阳极氧化铝 3D 超薄笔记本（真实后转轴开合 + 65 键 + 动态屏幕环境光；可内放 `<img>` 或 `data-title`） | `laptop-open@t` / `laptop-close@t` / `showcase-orbit@t` |
+| `data-make="keycap3d"` | 客制化机械轴微距特写或快捷键联排（真三维镀金螺旋弹簧压缩 + 十字轴心；`data-keys="⌘,K"`、`data-subs="CMD,RUN"`） | `key-press3d@t` / `key-explode3d@t` / `showcase-orbit@t` |
+| `data-make="rack3d"` | 数据中心 4 刀片热插拔服务器机柜（独立 OLED 负载屏 + 两侧光纤流；`data-blades="NODE 01,..."`） | `rack-boot3d@t` / `blade-slide3d@t(i=2)` / `showcase-orbit@t` |
+| `data-make="prism3d"` | 光学水晶三棱镜激光色散分束台（入射白光击中棱镜折射为多路彩色光谱路由；`data-in-label`、`data-out-labels="...,..."`） | `prism-split3d@t` / `showcase-orbit@t` |
+| `data-make="gyro3d"` | 三轴万向陀螺 AI 中枢仪（正交嵌套三环差速旋转 + 环绕节点 + 磁吸归零锁定；`data-nodes="Planner,Coder,Modeler"`） | `gyro-spin3d@0` / `gyro-lock3d@t` / `showcase-orbit@t` |
+
+### 9.4 口播黄金叙事 3D 结构连招速查（`fx-narrative3d.js`，6 组件 · 13 动效 · 6 个可动 `.glb` 模型）
+
+百搭**任何口播题材**（科普、商业、职场、效率、认知反差）的炸场三维视觉隐喻组合！需先加载 `three-fx.min.js`、`three-vrm.min.js`、`assets/narrative3d/models-b64.js`（可选，供离线零延迟自检），再加载 `fx.js` 与 `fx-narrative3d.js`。每个组件自带两拍连续镜头与物理连招，完整样板见 `motion-lib/examples/narrative3d/index.html`：
+
+| 组件 | 适用口播话术场景与属性 | 黄金双拍 3D 连招 |
+|---|---|---|
+| `data-make="iceberg3d"` | **表象 vs 水下真相**（“你只看到水面上 10%，真正的 90% 藏在水下”；`data-tip`、`data-depths="...,...,..."`） | `ice-tip3d@0` → `ice-dive3d@1.4` |
+| `data-make="domino3d"` | **连锁崩塌 vs 关键截停**（“一步错步步错，除非在关键节点加一道防线”；`data-tiles="...,..."`、`data-shield`） | `domino-fall3d@0` → `domino-shield3d@1.8` |
+| `data-make="scale3d"` | **新旧对决与四两拨千斤反杀**（“堆苦力没用，一个支点直接逆转反超”；`data-left="标题\|副文"`、`data-right="标题\|副文"`） | `scale-drop3d@0` → `scale-flip3d@1.5` |
+| `data-make="funnel3d"` | **海量信息残酷筛选提纯**（“一万条噪点倒进去，三层过滤只留一颗金核”；`data-stages="...,...,..."`） | `funnel-pour3d@0` → `funnel-distill3d@1.6` |
+| `data-make="vault3d"` | **揭秘压箱底核心公式/底牌**（“今天把底层秘籍解锁打开给你看”；`data-secret="主公式\|子公式"`、`data-badge`） | `vault-unlock3d@0` → `vault-open3d@1.4` |
+| `data-make="pyramid3d"` | **四层认知段位跃迁加冕**（“底层拼体力、中层拼工具、顶层控生态”；`data-tiers="L1,L2,L3,TOP"`） | `pyramid-build3d@0` → `pyramid-crown3d@1.8` |
+
 粒子和 3D 只当某一个分镜的主视觉用（比如开场），不要当全片的背景装饰。当主视觉用时给那个容器加 `data-lint="content"`，否则 `check.mjs` 会把全屏画布当成背景、报「画面是空的」。
 
 ## 10. 常见问题
 
 | 现象 | 原因和改法 |
 |---|---|
-| `check.mjs` 报「没有这个动效」 | 名字写错了，按它提示的相近名字改；提示里没有合适的就去 motion-lib `README.md` 查 |
+| `check.mjs` 报「没有这个动效」 | 名字写错了，按它提示的相近名字改；提示里没有合适的就去 motion-lib `docs/CATALOG.md` 查 |
 | `check.mjs` 报「到位时画面是空的」 | 主素材写了晚出现的入场动效。删掉入场动效，改成 `wake@同样的时间` |
 | `check.mjs` 报「字太小」 | 把那段字放大到 32px 以上；放不下就删字或拆分镜 |
 | `check.mjs` 报「页面没有跑起来」 | 脚本报错了：浏览器打开 `index.html?play` 看控制台 |
