@@ -26,7 +26,7 @@
   </a>
 </div>
 
-> ⚡ **公式コンピュートパートナー [HRouter](https://hrouter.net/)**：**1 つの API キーで Claude / GPT / Gemini / Grok に直結**。従量課金・即時チャージ反映・リクエスト単位の利用明細に対応し、**[Claude Code](https://hrouter.net/docs/claude-code/)**・**[Codex](https://hrouter.net/docs/codex/)**・**[Gemini CLI](https://hrouter.net/docs/gemini-cli/)** から「視聴維持率の分析 → 台本作成 → `motion-lib` 60fps レンダリング → サムネイル生成 → Douyin 自動投稿」まで一気通貫で自動実行できます！ 👉 **[公式サイト hrouter.net](https://hrouter.net/)** · **[モデルと料金](https://hrouter.net/models/)** · **[導入ガイド](https://hrouter.net/docs/index/)**
+> ⚡ **公式コンピュートパートナー [HRouter](https://hrouter.net/)**：**1 つの API キーで Claude / GPT / Gemini / Grok に直結**。従量課金・即時チャージ反映・リクエスト単位の利用明細に対応し、**[Claude Code](https://hrouter.net/docs/claude-code/)**・**[Codex](https://hrouter.net/docs/codex/)**・**[Gemini CLI](https://hrouter.net/docs/gemini-cli/)**, **[DeepSeek](https://hrouter.net/docs/deepseek/)** から「視聴維持率の分析 → 台本作成 → `motion-lib` 60fps レンダリング → サムネイル生成 → Douyin 自動投稿」まで一気通貫で自動実行できます！ 👉 **[公式サイト hrouter.net](https://hrouter.net/)** · **[モデルと料金](https://hrouter.net/models/)** · **[導入ガイド](https://hrouter.net/docs/index/)**
 
 ---
 
